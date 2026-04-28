@@ -15,16 +15,22 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
   const [activeDayId, setActiveDayId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'workout' | 'progress' | 'subscription' | 'builder'>('workout');
 
-  useEffect(() => {
-    if (client) {
-      if (selectedPlanId === 'current') {
-        setActiveDayId(client.workoutPlan[0]?.id || null);
-      } else {
-        const pastPlan = client.pastPlans?.find(p => p.id === selectedPlanId);
-        setActiveDayId(pastPlan?.workoutPlan[0]?.id || null);
-      }
+  React.useEffect(() => {
+    if (!client) return;
+
+    // Recuperiamo i giorni della scheda attualmente selezionata
+    const currentPlanDays = selectedPlanId === 'current' 
+      ? client.workoutPlan 
+      : client.pastPlans?.find(p => p.id === selectedPlanId)?.workoutPlan || [];
+
+    // Verifichiamo se il giorno attualmente attivo esiste ancora in questa scheda
+    const isDayStillValid = currentPlanDays.some(d => d.id === activeDayId);
+
+    // Cambiamo giorno SOLO se quello in memoria non è valido (es. cambio scheda o primo accesso)
+    if (!isDayStillValid && currentPlanDays.length > 0) {
+      setActiveDayId(currentPlanDays[0].id);
     }
-  }, [selectedPlanId, client]);
+  }, [selectedPlanId, client?.workoutPlan, client?.pastPlans]);
 
   if (!client) return null;
 

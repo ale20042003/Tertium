@@ -1,0 +1,14 @@
+# Dipendenze
+node_modules/
+dist/
+dist-ssr/
+
+# Log
+logs
+*.log
+npm-debug.log*
+
+# File di sistema e editor
+.DS_Store
+.vscode/
+.idea/
