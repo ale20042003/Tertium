@@ -124,7 +124,8 @@ export const Reports: React.FC = () => {
       </div>
 
       {/* ─── KPI Cards ─── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Modificato in grid-cols-1 sm:grid-cols-3 per adattarsi ai 3 riquadri rimanenti */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Abbonamenti attivi */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-neutral-200 flex items-center gap-4">
           <div className="w-11 h-11 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 flex-shrink-0">
@@ -155,21 +156,6 @@ export const Reports: React.FC = () => {
           <div>
             <p className="text-neutral-500 text-xs font-medium">Da incassare</p>
             <h3 className={`text-2xl font-bold ${kpi.totalDaPagare > 0 ? 'text-amber-600' : 'text-green-600'}`}>€{kpi.totalDaPagare.toFixed(0)}</h3>
-          </div>
-        </div>
-
-        {/* Rate scadute / in scadenza */}
-        <div className={`p-5 rounded-2xl shadow-sm border flex items-center gap-4 ${kpi.rateScadute > 0 ? 'bg-red-50 border-red-200' : kpi.rateInScadenza7gg > 0 ? 'bg-amber-50 border-amber-200' : 'bg-white border-neutral-200'}`}>
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${kpi.rateScadute > 0 ? 'bg-red-100 text-red-600' : kpi.rateInScadenza7gg > 0 ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'}`}>
-            <AlertTriangle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className={`text-xs font-medium ${kpi.rateScadute > 0 ? 'text-red-600' : 'text-neutral-500'}`}>
-              {kpi.rateScadute > 0 ? 'Rate Scadute' : 'Scad. 7gg'}
-            </p>
-            <h3 className={`text-2xl font-bold ${kpi.rateScadute > 0 ? 'text-red-700' : kpi.rateInScadenza7gg > 0 ? 'text-amber-700' : 'text-green-700'}`}>
-              {kpi.rateScadute > 0 ? kpi.rateScadute : kpi.rateInScadenza7gg > 0 ? kpi.rateInScadenza7gg : '✓'}
-            </h3>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Plus, Trash2, Dumbbell, Clock, Repeat, X, CreditCard, CheckCircle2, AlertCircle, Clock3 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, Plus, Trash2, Dumbbell, Clock, Repeat, X, CreditCard, CheckCircle2, AlertCircle, Clock3, Search, ChevronDown, Check } from 'lucide-react';
 import { useAppContext } from '../store';
 import { Client, WorkoutDay } from '../types';
 
@@ -7,6 +7,92 @@ interface ClientDetailsProps {
   client: Client;
   onBack: () => void;
 }
+
+// ─── COMPONENTE: Menù a tendina con ricerca integrata ───
+const SearchableExerciseSelect = ({ exercises, value, onChange }: { exercises: any[], value: string, onChange: (val: string) => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedExercise = exercises.find((e) => e.id === value);
+  const filteredExercises = exercises.filter((e) =>
+    e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    e.muscleGroup.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      {/* Finta "Select" visibile */}
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-4 py-2 bg-white border border-neutral-300 rounded-lg cursor-pointer flex justify-between items-center hover:bg-neutral-50 transition-colors focus:ring-2 focus:ring-blue-500"
+      >
+        <span className={`text-sm ${selectedExercise ? "text-neutral-900 font-medium" : "text-neutral-500"}`}>
+          {selectedExercise ? `${selectedExercise.name} (${selectedExercise.muscleGroup})` : 'Seleziona esercizio...'}
+        </span>
+        <ChevronDown className="w-4 h-4 text-neutral-400" />
+      </div>
+
+      {/* Menù a tendina a comparsa */}
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-neutral-200 rounded-lg shadow-xl overflow-hidden">
+          <div className="p-2 border-b border-neutral-100 bg-neutral-50">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+              <input
+                type="text"
+                autoFocus
+                placeholder="Cerca esercizio..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-white border border-neutral-300 rounded-md text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          
+          <div className="max-h-60 overflow-y-auto">
+            {filteredExercises.length > 0 ? (
+              filteredExercises.map((ex) => (
+                <div
+                  key={ex.id}
+                  onClick={() => {
+                    onChange(ex.id);
+                    setIsOpen(false);
+                    setSearchTerm(''); 
+                  }}
+                  className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 flex justify-between items-center transition-colors ${
+                    value === ex.id ? 'bg-blue-50 text-blue-700' : 'text-neutral-700'
+                  }`}
+                >
+                  <div>
+                    <span className="font-medium">{ex.name}</span>
+                    <span className="text-neutral-400 text-xs ml-2">({ex.muscleGroup})</span>
+                  </div>
+                  {value === ex.id && <Check className="w-4 h-4 text-blue-600" />}
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-4 text-sm text-neutral-500 text-center italic">
+                Nessun esercizio trovato.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+// ────────────────────────────────────────────────────────
 
 export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) => {
   const { exercises, subscriptions, addWorkoutDay, deleteWorkoutDay, addWorkoutExercise, deleteWorkoutExercise, archiveWorkoutPlan } = useAppContext();
@@ -23,7 +109,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
   const [exerciseFormData, setExerciseFormData] = useState({
     exerciseId: '',
     sets: 3,
-    reps: '10',
+    reps: 10,
     restSeconds: 60 as number | string,
     notes: ''
   });
@@ -51,7 +137,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
     setExerciseFormData({
       exerciseId: exercises.length > 0 ? exercises[0].id : '',
       sets: 3,
-      reps: '10',
+      reps: 10,
       restSeconds: 60,
       notes: ''
     });
@@ -61,12 +147,29 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
   const handleAddExercise = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedDayId && exerciseFormData.exerciseId) {
+      const selectedEx = exercises.find(ex => ex.id === exerciseFormData.exerciseId);
+      const isCardio = selectedEx?.muscleGroup === 'Cardio';
+
       const { restSeconds, ...rest } = exerciseFormData;
-      const finalRest = restSeconds === '' ? 0 : Number(restSeconds);
-      addWorkoutExercise(client.id, selectedDayId, { ...rest, rest: `${finalRest}s` });
+      
+      // Se è cardio resettiamo i valori tecnici a zero/trattino in modo invisibile
+      const finalRest = isCardio ? 0 : (restSeconds === '' ? 0 : Number(restSeconds));
+      const finalSets = isCardio ? 1 : rest.sets;
+      const finalReps = isCardio ? '-' : String(rest.reps);
+
+      addWorkoutExercise(client.id, selectedDayId, { 
+        ...rest, 
+        sets: finalSets,
+        reps: finalReps,
+        rest: `${finalRest}s` 
+      });
       setIsExerciseModalOpen(false);
     }
   };
+
+  // Variabile per capire se attualmente nel form abbiamo scelto un esercizio Cardio
+  const selectedExInForm = exercises.find(e => e.id === exerciseFormData.exerciseId);
+  const isCardioSelected = selectedExInForm?.muscleGroup === 'Cardio';
 
   return (
     <div className="space-y-6">
@@ -274,6 +377,8 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                     {day.exercises.map((workoutEx) => {
                       const exerciseInfo = exercises.find(e => e.id === workoutEx.exerciseId);
                       if (!exerciseInfo) return null;
+                      
+                      const isCardio = exerciseInfo.muscleGroup === 'Cardio';
 
                       return (
                         <div key={workoutEx.id} className="flex items-center justify-between p-3 rounded-xl border border-neutral-100 bg-neutral-50/50 hover:bg-neutral-50 transition-colors">
@@ -285,9 +390,14 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                               </span>
                             </div>
                             <div className="flex items-center gap-4 text-sm text-neutral-600">
-                              <span className="flex items-center gap-1"><Repeat className="w-4 h-4" /> {workoutEx.sets}x{workoutEx.reps}</span>
-                              <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {workoutEx.rest}</span>
-                              {workoutEx.notes && <span className="text-neutral-400 italic">"{workoutEx.notes}"</span>}
+                              {/* Mostriamo Serie/Reps solo se NON è cardio */}
+                              {!isCardio && (
+                                <>
+                                  <span className="flex items-center gap-1"><Repeat className="w-4 h-4" /> {workoutEx.sets}x{workoutEx.reps}</span>
+                                  <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {workoutEx.rest}</span>
+                                </>
+                              )}
+                              {workoutEx.notes && <span className={`${isCardio ? 'text-neutral-600 font-medium' : 'text-neutral-400 italic'}`}>"{workoutEx.notes}"</span>}
                             </div>
                           </div>
                           <button
@@ -339,12 +449,18 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                           day.exercises.map(workoutEx => {
                             const exerciseInfo = exercises.find(e => e.id === workoutEx.exerciseId);
                             if (!exerciseInfo) return null;
+                            const isCardioStorico = exerciseInfo.muscleGroup === 'Cardio';
+                            
                             return (
                               <div key={workoutEx.id} className="p-3 bg-neutral-50 rounded-lg flex justify-between items-start">
                                 <div>
                                   <div className="font-medium text-neutral-900">{exerciseInfo.name}</div>
                                   <div className="text-xs text-neutral-500 mt-1">
-                                    {workoutEx.sets}x{workoutEx.reps} • Rec: {workoutEx.rest}
+                                    {!isCardioStorico ? (
+                                      `${workoutEx.sets}x${workoutEx.reps} • Rec: ${workoutEx.rest}`
+                                    ) : (
+                                      workoutEx.notes ? `Note: ${workoutEx.notes}` : 'Cardio'
+                                    )}
                                   </div>
                                 </div>
                                 <div className="text-right flex flex-col items-end gap-1">
@@ -353,7 +469,9 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                                       {workoutEx.logs.length} progressi salvati
                                     </span>
                                   ) : (
-                                    <span className="text-xs text-neutral-400">Nessun progresso</span>
+                                    <span className="text-xs text-neutral-400">
+                                      {isCardioStorico ? '' : 'Nessun progresso'}
+                                    </span>
                                   )}
                                 </div>
                               </div>
@@ -367,93 +485,6 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
               )}
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Modal Aggiungi Giorno */}
-      {isDayModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-            <div className="p-5 border-b border-neutral-200 flex justify-between items-center">
-              <h2 className="text-lg font-bold text-neutral-900">Nuovo Giorno</h2>
-              <button onClick={() => setIsDayModalOpen(false)} className="text-neutral-400 hover:text-neutral-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleAddDay} className="p-5 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Nome Giorno</label>
-                <input
-                  type="text"
-                  required
-                  value={newDayName}
-                  onChange={(e) => setNewDayName(e.target.value)}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="es. Giorno 1 - Petto/Tricipiti"
-                />
-              </div>
-              <div className="pt-2 flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setIsDayModalOpen(false)}
-                  className="px-4 py-2 text-neutral-600 font-medium hover:bg-neutral-100 rounded-lg transition-colors"
-                >
-                  Annulla
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors"
-                >
-                  Aggiungi
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Archiviazione */}
-      {isArchiveModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-            <div className="p-5 border-b border-neutral-200 flex justify-between items-center">
-              <h2 className="text-lg font-bold text-neutral-900">Archivia Scheda</h2>
-              <button onClick={() => setIsArchiveModalOpen(false)} className="text-neutral-400 hover:text-neutral-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleArchivePlan} className="p-5 space-y-4">
-              <p className="text-sm text-neutral-600 text-left">
-                Stai per archiviare la scheda attuale. Verrà salvata nello storico per sola consultazione e la scheda attuale verrà svuotata, pronta per esserne creata una nuova.
-              </p>
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Nome Scheda Archiviata</label>
-                <input
-                  type="text"
-                  required
-                  value={archivePlanName}
-                  onChange={(e) => setArchivePlanName(e.target.value)}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="es. Scheda Invernale 2025"
-                />
-              </div>
-              <div className="pt-2 flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setIsArchiveModalOpen(false)}
-                  className="px-4 py-2 text-neutral-600 font-medium hover:bg-neutral-100 rounded-lg transition-colors"
-                >
-                  Annulla
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors"
-                >
-                  Archivia
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
 
@@ -483,68 +514,72 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                 <>
                   <div>
                     <label className="block text-sm font-medium text-neutral-700 mb-1">Seleziona Esercizio</label>
-                    <select
-                      required
+                    <SearchableExerciseSelect
+                      exercises={exercises}
                       value={exerciseFormData.exerciseId}
-                      onChange={(e) => setExerciseFormData({ ...exerciseFormData, exerciseId: e.target.value })}
-                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                    >
-                      {exercises.map(ex => (
-                        <option key={ex.id} value={ex.id}>{ex.name} ({ex.muscleGroup})</option>
-                      ))}
-                    </select>
+                      onChange={(newId: string) => setExerciseFormData({ ...exerciseFormData, exerciseId: newId })}
+                    />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">Serie</label>
-                      <input
-                        type="number"
-                        min="1"
-                        required
-                        value={exerciseFormData.sets}
-                        onChange={(e) => setExerciseFormData({ ...exerciseFormData, sets: parseInt(e.target.value) || 0 })}
-                        className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">Ripetizioni</label>
-                      <input
-                        type="text"
-                        required
-                        value={exerciseFormData.reps}
-                        onChange={(e) => setExerciseFormData({ ...exerciseFormData, reps: e.target.value })}
-                        className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                        placeholder="es. 10-12"
-                      />
-                    </div>
-                  </div>
+                  {/* NASCONDIAMO I CAMPI SE E' CARDIO */}
+                  {!isCardioSelected && (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 mb-1">Serie</label>
+                          <input
+                            type="number"
+                            min="1"
+                            required={!isCardioSelected}
+                            value={exerciseFormData.sets}
+                            onChange={(e) => setExerciseFormData({ ...exerciseFormData, sets: parseInt(e.target.value) || 0 })}
+                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 mb-1">Ripetizioni</label>
+                          <input
+                            type="number"
+                            min="1"
+                            required={!isCardioSelected}
+                            value={exerciseFormData.reps}
+                            onChange={(e) => setExerciseFormData({ ...exerciseFormData, reps: parseInt(e.target.value) || 0 })}
+                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="es. 10"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1">Recupero (secondi)</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            step="10"
+                            required={!isCardioSelected}
+                            value={exerciseFormData.restSeconds}
+                            onChange={(e) => setExerciseFormData({ ...exerciseFormData, restSeconds: e.target.value === '' ? '' : parseInt(e.target.value) || 0 })}
+                            className="w-full px-4 py-2 pr-16 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="es. 90"
+                          />
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm font-medium">sec</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">Recupero (secondi)</label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        step="10"
-                        required
-                        value={exerciseFormData.restSeconds}
-                        onChange={(e) => setExerciseFormData({ ...exerciseFormData, restSeconds: e.target.value === '' ? '' : parseInt(e.target.value) || 0 })}
-                        className="w-full px-4 py-2 pr-16 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                        placeholder="es. 90"
-                      />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm font-medium">sec</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">Note (Opzionale)</label>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      {isCardioSelected ? 'Note sull\'esecuzione' : 'Note (Opzionale)'}
+                    </label>
                     <input
                       type="text"
+                      required={isCardioSelected} // Rendiamo obbligatorio per il cardio se vogliamo
                       value={exerciseFormData.notes}
                       onChange={(e) => setExerciseFormData({ ...exerciseFormData, notes: e.target.value })}
                       className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="es. Lento in eccentrica"
+                      placeholder={isCardioSelected ? "es. 30 minuti, velocità 6, pendenza 2" : "es. Lento in eccentrica"}
                     />
                   </div>
 

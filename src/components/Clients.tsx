@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Trash2, Edit2, ChevronRight, X, Euro, CheckCircle2, Circle } from 'lucide-react';
+import { Plus, Search, Trash2, Edit2, ChevronRight, X, Euro, CheckCircle2, Circle, ArrowUpDown } from 'lucide-react';
 import { useAppContext } from '../store';
 import { Client, ClientPayment, PaymentInstallment } from '../types';
 import { ClientDetails } from './ClientDetails';
@@ -7,9 +7,10 @@ import { ClientDetails } from './ClientDetails';
 export const Clients: React.FC = () => {
   const { clients, addClient, updateClient, deleteClient, subscriptions, updateClientPayment } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('alphabetical'); 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [formData, setFormData] = useState({ name: '', email: '', subscriptionId: '', subscriptionStart: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', subscriptionId: '', subscriptionStart: '' });
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,10 +21,29 @@ export const Clients: React.FC = () => {
     installments: [],
   });
 
+  // 1. Filtro ricerca
   const filteredClients = clients.filter(c =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchTerm.toLowerCase())
+    c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.phone && c.phone.includes(searchTerm))
   );
+
+  // 2. Ordinamento
+  const sortedClients = [...filteredClients].sort((a, b) => {
+    if (sortBy === 'alphabetical') {
+      return a.name.localeCompare(b.name);
+    } else if (sortBy === 'expiration') {
+      if (!a.subscriptionEnd && !b.subscriptionEnd) return 0;
+      if (!a.subscriptionEnd) return 1;
+      if (!b.subscriptionEnd) return -1;
+      return new Date(a.subscriptionEnd).getTime() - new Date(b.subscriptionEnd).getTime();
+    } else if (sortBy === 'newest') {
+      return clients.indexOf(b) - clients.indexOf(a);
+    } else if (sortBy === 'oldest') {
+      return clients.indexOf(a) - clients.indexOf(b);
+    }
+    return 0;
+  });
 
   /* ─── Client modal ─── */
   const handleSubmit = (e: React.FormEvent) => {
@@ -41,7 +61,11 @@ export const Clients: React.FC = () => {
       const sub = subscriptions.find(s => s.id === formData.subscriptionId);
       if (sub) {
         const startDate = new Date(formData.subscriptionStart);
-        startDate.setMonth(startDate.getMonth() + sub.durationMonths);
+        if (sub.durationMonths > 0) {
+          startDate.setMonth(startDate.getMonth() + sub.durationMonths);
+        } else if (sub.durationDays && sub.durationDays > 0) {
+          startDate.setDate(startDate.getDate() + sub.durationDays);
+        }
         end = startDate.toISOString().split('T')[0];
       }
     }
@@ -54,10 +78,16 @@ export const Clients: React.FC = () => {
   const openModal = (client?: Client) => {
     if (client) {
       setEditingClient(client);
-      setFormData({ name: client.name, email: client.email, subscriptionId: client.subscriptionId || '', subscriptionStart: client.subscriptionStart || '' });
+      setFormData({ 
+        name: client.name, 
+        email: client.email, 
+        phone: client.phone || '', 
+        subscriptionId: client.subscriptionId || '', 
+        subscriptionStart: client.subscriptionStart || '' 
+      });
     } else {
       setEditingClient(null);
-      setFormData({ name: '', email: '', subscriptionId: '', subscriptionStart: '' });
+      setFormData({ name: '', email: '', phone: '', subscriptionId: '', subscriptionStart: '' });
     }
     setIsModalOpen(true);
   };
@@ -65,7 +95,7 @@ export const Clients: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingClient(null);
-    setFormData({ name: '', email: '', subscriptionId: '', subscriptionStart: '' });
+    setFormData({ name: '', email: '', phone: '', subscriptionId: '', subscriptionStart: '' });
     setError(null);
   };
 
@@ -79,7 +109,6 @@ export const Clients: React.FC = () => {
         installments: existing.installments.map(i => ({ ...i, amount: String(i.amount) })),
       });
     } else {
-      // Pre-popola le rate in base a defaultInstallments dell'abbonamento
       const numRate = sub?.defaultInstallments ?? 1;
       const rataCost = sub ? (sub.cost / numRate) : 0;
       const startDate = client.subscriptionStart ? new Date(client.subscriptionStart + 'T00:00:00') : new Date();
@@ -112,12 +141,10 @@ export const Clients: React.FC = () => {
   };
 
   const updateInstallment = (id: string, field: string, value: string | boolean) => {
-    // BLOCCO NUMERI NEGATIVI
     if (typeof value === 'string' && value.includes('-')) return;
 
     setPaymentForm(prev => {
       const updated = prev.installments.map(i => i.id === id ? { ...i, [field]: value } : i);
-      // Se cambia lo stato "paid" o "amount", ricalcola automaticamente l'importo saldato
       if (field === 'paid' || field === 'amount') {
         const newAmountPaid = updated
           .filter(i => i.paid)
@@ -147,7 +174,6 @@ export const Clients: React.FC = () => {
     closePaymentModal();
   };
 
-  /* ─── Routing to client details ─── */
   if (selectedClientId) {
     const client = clients.find(c => c.id === selectedClientId);
     if (client) return <ClientDetails client={client} onBack={() => setSelectedClientId(null)} />;
@@ -173,16 +199,30 @@ export const Clients: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
-        <div className="p-4 border-b border-neutral-200">
-          <div className="relative max-w-md">
+        <div className="p-4 border-b border-neutral-200 flex flex-col md:flex-row gap-4 justify-between items-center">
+          <div className="relative w-full md:max-w-md">
             <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
               type="text"
-              placeholder="Cerca per nome o email..."
+              placeholder="Cerca per nome, email o telefono..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
+          </div>
+          
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <ArrowUpDown className="w-5 h-5 text-neutral-400 flex-shrink-0" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="w-full md:w-auto px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm text-neutral-700 font-medium cursor-pointer"
+            >
+              <option value="alphabetical">Ordine Alfabetico (A-Z)</option>
+              <option value="expiration">Scadenza Abbonamento</option>
+              <option value="newest">Dal più recente al meno recente</option>
+              <option value="oldest">Dal meno recente al più recente</option>
+            </select>
           </div>
         </div>
 
@@ -191,15 +231,14 @@ export const Clients: React.FC = () => {
             <thead>
               <tr className="bg-neutral-50 text-neutral-500 text-sm uppercase tracking-wider">
                 <th className="p-4 font-medium border-b border-neutral-200">Cliente</th>
-                <th className="p-4 font-medium border-b border-neutral-200">Email</th>
+                <th className="p-4 font-medium border-b border-neutral-200">Contatti</th>
                 <th className="p-4 font-medium border-b border-neutral-200">Abbonamento</th>
-                <th className="p-4 font-medium border-b border-neutral-200">Scheda</th>
                 <th className="p-4 font-medium border-b border-neutral-200 text-right">Azioni</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200">
-              {filteredClients.length > 0 ? (
-                filteredClients.map((client) => {
+              {sortedClients.length > 0 ? (
+                sortedClients.map((client) => {
                   const sub = subscriptions.find(s => s.id === client.subscriptionId);
                   const pay = client.payment;
                   return (
@@ -212,7 +251,10 @@ export const Clients: React.FC = () => {
                           <span className="font-medium text-neutral-900">{client.name}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-neutral-600">{client.email}</td>
+                      <td className="p-4 text-neutral-600">
+                        <div>{client.email}</div>
+                        {client.phone && <div className="text-xs text-neutral-400 mt-0.5">{client.phone}</div>}
+                      </td>
                       <td className="p-4">
                         {client.subscriptionId || client.subscriptionStart || client.subscriptionEnd ? (
                           <div className="text-sm">
@@ -243,11 +285,6 @@ export const Clients: React.FC = () => {
                         ) : (
                           <span className="text-neutral-400 text-sm italic">Non impostato</span>
                         )}
-                      </td>
-                      <td className="p-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
-                          {client.workoutPlan.length} Giorni
-                        </span>
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -289,7 +326,7 @@ export const Clients: React.FC = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-neutral-500">
+                  <td colSpan={4} className="p-8 text-center text-neutral-500">
                     Nessun cliente trovato.
                   </td>
                 </tr>
@@ -315,24 +352,36 @@ export const Clients: React.FC = () => {
               {error && (
                 <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm font-medium">{error}</div>
               )}
+              
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Nome Completo</label>
                 <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="es. Mario Rossi" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Email</label>
-                <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="es. mario.rossi@email.com" />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Email</label>
+                  <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="mario@email.com" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Telefono</label>
+                  <input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="es. 333 1234567" />
+                </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Tipo Abbonamento</label>
                   <select value={formData.subscriptionId} onChange={(e) => setFormData({ ...formData, subscriptionId: e.target.value })}
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
                     <option value="">Nessun abbonamento</option>
                     {subscriptions.map(sub => (
-                      <option key={sub.id} value={sub.id}>{sub.name} ({sub.durationMonths} mesi)</option>
+                      <option key={sub.id} value={sub.id}>
+                        {sub.name} ({sub.durationMonths > 0 ? `${sub.durationMonths} mesi` : `${sub.durationDays || 0} giorni`})
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -343,6 +392,7 @@ export const Clients: React.FC = () => {
                     disabled={!formData.subscriptionId} />
                 </div>
               </div>
+              
               <div className="pt-4 flex gap-3 justify-end">
                 <button type="button" onClick={closeModal} className="px-4 py-2 text-neutral-600 font-medium hover:bg-neutral-100 rounded-lg transition-colors">Annulla</button>
                 <button type="submit" className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors">Salva</button>
@@ -367,18 +417,18 @@ export const Clients: React.FC = () => {
             </div>
 
             <div className="p-6 space-y-5 overflow-y-auto">
-              {/* Riepilogo abbonamento */}
               {paymentSub && (
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
                   <div>
                     <div className="text-sm font-medium text-blue-800">{paymentSub.name}</div>
-                    <div className="text-xs text-blue-600 mt-0.5">{paymentSub.durationMonths} mesi · Costo totale</div>
+                    <div className="text-xs text-blue-600 mt-0.5">
+                      {paymentSub.durationMonths > 0 ? `${paymentSub.durationMonths} mesi` : `${paymentSub.durationDays || 0} giorni`} · Costo totale
+                    </div>
                   </div>
                   <div className="text-2xl font-bold text-blue-700">€{paymentSub.cost.toFixed(2)}</div>
                 </div>
               )}
 
-              {/* Importo già saldato */}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Importo già saldato (€)</label>
                 <input
@@ -387,7 +437,7 @@ export const Clients: React.FC = () => {
                   step="0.01"
                   value={paymentForm.amountPaid}
                   onChange={(e) => {
-                    if (e.target.value.includes('-')) return; // BLOCCO NUMERI NEGATIVI
+                    if (e.target.value.includes('-')) return;
                     setPaymentForm(prev => ({ ...prev, amountPaid: e.target.value }));
                   }}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -400,7 +450,6 @@ export const Clients: React.FC = () => {
                 )}
               </div>
 
-              {/* Rate */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-neutral-700">Rate di pagamento</label>
@@ -443,7 +492,6 @@ export const Clients: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => updateInstallment(inst.id, 'paid', !inst.paid)}
-                          title={inst.paid ? 'Segna come non pagata' : 'Segna come pagata'}
                           className={`p-1 rounded-lg transition-colors flex-shrink-0 ${inst.paid ? 'text-green-600 hover:bg-green-50' : 'text-neutral-400 hover:bg-neutral-100'}`}
                         >
                           {inst.paid ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}

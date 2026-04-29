@@ -3,12 +3,26 @@ import { Plus, Search, Trash2, Edit2, X } from 'lucide-react';
 import { useAppContext } from '../store';
 import { Exercise } from '../types';
 
+// Definizione delle costanti per i gruppi muscolari
+const MUSCLE_GROUPS = [
+  'Schiena',
+  'Spalle',
+  'Petto',
+  'Bicipiti',
+  'Tricipiti',
+  'Gambe',
+  'Addome',
+  'Cardio'
+];
+
 export const Exercises: React.FC = () => {
   const { exercises, addExercise, updateExercise, deleteExercise } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
-  const [formData, setFormData] = useState({ name: '', muscleGroup: '', description: '', videoUrl: '' });
+  
+  // Impostiamo il primo gruppo muscolare come default iniziale
+  const [formData, setFormData] = useState({ name: '', muscleGroup: MUSCLE_GROUPS[0], description: '', videoUrl: '' });
   const [isUploading, setIsUploading] = useState(false);
 
   const filteredExercises = exercises.filter(e => 
@@ -33,16 +47,18 @@ export const Exercises: React.FC = () => {
     // Reset state without removing the video we just saved
     setIsModalOpen(false);
     setEditingExercise(null);
-    setFormData({ name: '', muscleGroup: '', description: '', videoUrl: '' });
+    setFormData({ name: '', muscleGroup: MUSCLE_GROUPS[0], description: '', videoUrl: '' });
   };
 
   const openModal = (exercise?: Exercise) => {
     if (exercise) {
       setEditingExercise(exercise);
-      setFormData({ name: exercise.name, muscleGroup: exercise.muscleGroup, description: exercise.description || '', videoUrl: exercise.videoUrl || '' });
+      // Fallback a MUSCLE_GROUPS[0] nel caso in cui un esercizio vecchio avesse un gruppo scritto a mano non più in lista
+      const groupToSet = MUSCLE_GROUPS.includes(exercise.muscleGroup) ? exercise.muscleGroup : MUSCLE_GROUPS[0];
+      setFormData({ name: exercise.name, muscleGroup: groupToSet, description: exercise.description || '', videoUrl: exercise.videoUrl || '' });
     } else {
       setEditingExercise(null);
-      setFormData({ name: '', muscleGroup: '', description: '', videoUrl: '' });
+      setFormData({ name: '', muscleGroup: MUSCLE_GROUPS[0], description: '', videoUrl: '' });
     }
     setIsModalOpen(true);
   };
@@ -57,7 +73,7 @@ export const Exercises: React.FC = () => {
     }
     setIsModalOpen(false);
     setEditingExercise(null);
-    setFormData({ name: '', muscleGroup: '', description: '', videoUrl: '' });
+    setFormData({ name: '', muscleGroup: MUSCLE_GROUPS[0], description: '', videoUrl: '' });
   };
 
   return (
@@ -171,17 +187,24 @@ export const Exercises: React.FC = () => {
                   placeholder="es. Panca Piana"
                 />
               </div>
+              
+              {/* MENU A TENDINA PER IL GRUPPO MUSCOLARE */}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Gruppo Muscolare</label>
-                <input
-                  type="text"
+                <select
                   required
                   value={formData.muscleGroup}
                   onChange={(e) => setFormData({ ...formData, muscleGroup: e.target.value })}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="es. Petto"
-                />
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                >
+                  {MUSCLE_GROUPS.map(group => (
+                    <option key={group} value={group}>
+                      {group}
+                    </option>
+                  ))}
+                </select>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Video Esercizio (.mp4, facoltativo)</label>
                 <div className="space-y-2">
@@ -233,7 +256,7 @@ export const Exercises: React.FC = () => {
                   </div>
                   {formData.videoUrl?.startsWith('localforage:') && (
                     <div className="flex items-center justify-between bg-green-50 px-3 py-2 rounded-lg border border-green-200">
-                      <p className="text-sm text-green-700 font-medium">✓ File video caricato correttamente</p>
+                      <p className="text-sm text-green-700 font-medium">✓ File video caricato</p>
                       <button
                         type="button"
                         onClick={async () => {

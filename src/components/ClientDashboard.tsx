@@ -89,7 +89,7 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
       ) : activeTab === 'builder' ? (
         <PlanBuilderTab 
           exercises={exercises} 
-          onSave={(newDays) => {
+          onSave={(newDays: any) => {
             saveCustomPlan(client.id, newDays);
             setActiveTab('workout');
             setSelectedPlanId('current');
@@ -260,7 +260,7 @@ const PlanBuilderTab = ({ exercises, onSave }: any) => {
                         onChange={(e) => updateExercise(day.id, ex.id, 'exerciseId', e.target.value)}
                         className="w-full bg-neutral-900 border border-neutral-700 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-lime-400"
                       >
-                        {exercises.map(e => <option key={e.id} value={e.id}>{e.name} ({e.muscleGroup})</option>)}
+                        {exercises.map((e: any) => <option key={e.id} value={e.id}>{e.name} ({e.muscleGroup})</option>)}
                       </select>
                     </div>
 
@@ -337,11 +337,15 @@ const SubscriptionTab = ({ client, subscriptions }: any) => {
   const getStatus = (inst: any) => {
     if (inst.paid) return { label: 'Saldata', color: 'text-green-400 bg-green-400/10 border border-green-400/20' };
     if (!inst.dueDate) return { label: 'In attesa', color: 'text-neutral-400 bg-neutral-800 border border-neutral-700' };
+    
     const due = new Date(inst.dueDate + 'T00:00:00');
     if (due < today) return { label: 'Scaduta', color: 'text-red-400 bg-red-400/10 border border-red-400/20' };
+    
     const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
-    if (diff <= 7) return { label: `Scade in ${diff}g`, color: 'text-amber-400 bg-amber-400/10 border border-amber-400/20' };
-    return { label: 'In scadenza', color: 'text-blue-400 bg-blue-400/10 border border-blue-400/20' };
+    
+    if (diff === 0) return { label: 'Scade oggi', color: 'text-amber-400 bg-amber-400/10 border border-amber-400/20' };
+    if (diff <= 7) return { label: `Scade tra ${diff} giorni`, color: 'text-amber-400 bg-amber-400/10 border border-amber-400/20' };
+    return { label: `Scade tra ${diff} giorni`, color: 'text-blue-400 bg-blue-400/10 border border-blue-400/20' };
   };
 
   return (
@@ -506,6 +510,9 @@ const ExerciseCard = ({ workoutEx, exerciseInfo, clientId, dayId, isReadOnly }: 
     setDeletingLog(null);
   };
 
+  // NUOVA LOGICA: Controlliamo se l'esercizio è di tipo "Cardio"
+  const isCardio = exerciseInfo?.muscleGroup === 'Cardio';
+
   return (
     <>
       <div className="bg-neutral-900 rounded-3xl overflow-hidden border border-neutral-800 shadow-2xl relative">
@@ -544,110 +551,116 @@ const ExerciseCard = ({ workoutEx, exerciseInfo, clientId, dayId, isReadOnly }: 
             </div>
           )}
           
-          <button 
-            onClick={() => setExpanded(!expanded)} 
-            className={`w-full py-4 rounded-2xl font-bold flex justify-center items-center gap-2 transition-colors ${
-              expanded ? 'bg-neutral-800 text-white' : (isReadOnly ? 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700' : 'bg-lime-400 text-black hover:bg-lime-500')
-            }`}
-          >
-            {expanded ? 'Chiudi' : (isReadOnly ? 'Visualizza Progressi Passati' : 'Traccia Progressi')} 
-            <ChevronDown className={`w-5 h-5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-          </button>
-
-          <AnimatePresence>
-            {expanded && (
-              <motion.div 
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
+          {/* Il blocco dei progressi viene mostrato SOLO se l'esercizio NON è Cardio */}
+          {!isCardio && (
+            <>
+              <button 
+                onClick={() => setExpanded(!expanded)} 
+                className={`w-full py-4 rounded-2xl font-bold flex justify-center items-center gap-2 transition-colors ${
+                  expanded ? 'bg-neutral-800 text-white' : (isReadOnly ? 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700' : 'bg-lime-400 text-black hover:bg-lime-500')
+                }`}
               >
-                <div className="pt-6 space-y-4 border-t border-neutral-800 mt-6">
-                  
-                  {sortedLogs.length > 0 && (
-                    <div className="space-y-3 mb-6">
-                      <h4 className="text-sm font-bold text-neutral-500 uppercase tracking-wider">Storico</h4>
-                      {sortedLogs.map((log: any) => (
-                        <div key={log.id} className="flex justify-between items-center bg-neutral-950 p-4 rounded-2xl border border-neutral-800 group">
-                          <div>
-                            <div className="font-bold text-neutral-300">Settimana {log.week}</div>
-                            <div className="text-[10px] text-neutral-500 mt-0.5">{new Date(log.date).toLocaleDateString('it-IT')}</div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1">
-                              <span className="text-xl font-bold text-lime-400">{log.weight}</span>
-                              <span className="text-neutral-500 font-medium text-sm">kg</span>
-                            </div>
-                            
-                            {!isReadOnly && (
-                              <div className="flex items-center gap-1">
-                                <button 
-                                  onClick={() => {
-                                    setEditWeightValue(String(log.weight));
-                                    setEditingLog(log);
-                                  }}
-                                  className="p-2 text-neutral-500 hover:text-blue-400 transition-colors"
-                                >
-                                  <Edit2 className="w-4 h-4" />
-                                </button>
-                                <button 
-                                  onClick={() => setDeletingLog(log)}
-                                  className="p-2 text-neutral-500 hover:text-red-400 transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                {expanded ? 'Chiudi' : (isReadOnly ? 'Visualizza Progressi Passati' : 'Traccia Progressi')} 
+                <ChevronDown className={`w-5 h-5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              </button>
 
-                  {!isReadOnly && (
-                    <form onSubmit={handleSaveLog} className="bg-neutral-950 p-5 rounded-2xl border border-lime-400/30">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-sm font-bold text-lime-400 uppercase tracking-wider">Registra Carico</h4>
-                        <select 
-                          value={selectedWeek}
-                          onChange={(e) => setSelectedWeek(Number(e.target.value))}
-                          className="bg-neutral-900 border border-neutral-800 text-white text-sm rounded-lg px-2 py-1 focus:outline-none focus:border-lime-400"
-                        >
-                          {availableWeeks.map(w => (
-                            <option key={w} value={w}>Settimana {w}</option>
+              <AnimatePresence>
+                {expanded && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-6 space-y-4 border-t border-neutral-800 mt-6">
+                      
+                      {sortedLogs.length > 0 && (
+                        <div className="space-y-3 mb-6">
+                          <h4 className="text-sm font-bold text-neutral-500 uppercase tracking-wider">Storico</h4>
+                          {sortedLogs.map((log: any) => (
+                            <div key={log.id} className="flex justify-between items-center bg-neutral-950 p-4 rounded-2xl border border-neutral-800 group">
+                              <div>
+                                <div className="font-bold text-neutral-300">Settimana {log.week}</div>
+                                <div className="text-[10px] text-neutral-500 mt-0.5">{new Date(log.date).toLocaleDateString('it-IT')}</div>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xl font-bold text-lime-400">{log.weight}</span>
+                                  <span className="text-neutral-500 font-medium text-sm">kg</span>
+                                </div>
+                                
+                                {!isReadOnly && (
+                                  <div className="flex items-center gap-1">
+                                    <button 
+                                      onClick={() => {
+                                        setEditWeightValue(String(log.weight));
+                                        setEditingLog(log);
+                                      }}
+                                      className="p-2 text-neutral-500 hover:text-blue-400 transition-colors"
+                                    >
+                                      <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button 
+                                      onClick={() => setDeletingLog(log)}
+                                      className="p-2 text-neutral-500 hover:text-red-400 transition-colors"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           ))}
-                        </select>
-                      </div>
-                      <div className="flex gap-3">
-                        <div className="relative flex-1">
-                          <input
-                            type="number"
-                            step="0.5"
-                            min="0"
-                            required
-                            value={newWeight}
-                            onChange={(e) => {
-                              if (e.target.value.includes('-')) return;
-                              setNewWeight(e.target.value);
-                            }}
-                            placeholder="Carico"
-                            className="w-full bg-neutral-900 border border-neutral-800 rounded-xl py-3 pl-4 pr-10 text-white placeholder:text-neutral-600 focus:outline-none focus:border-lime-400 transition-colors font-bold text-lg"
-                          />
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 font-medium">kg</span>
                         </div>
-                        <button 
-                          type="submit"
-                          className="bg-lime-400 text-black w-14 rounded-xl flex items-center justify-center hover:bg-lime-500 transition-colors"
-                        >
-                          <Plus className="w-6 h-6" />
-                        </button>
-                      </div>
-                    </form>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                      )}
+
+                      {!isReadOnly && (
+                        <form onSubmit={handleSaveLog} className="bg-neutral-950 p-5 rounded-2xl border border-lime-400/30">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-sm font-bold text-lime-400 uppercase tracking-wider">Registra Carico</h4>
+                            <select 
+                              value={selectedWeek}
+                              onChange={(e) => setSelectedWeek(Number(e.target.value))}
+                              className="bg-neutral-900 border border-neutral-800 text-white text-sm rounded-lg px-2 py-1 focus:outline-none focus:border-lime-400"
+                            >
+                              {availableWeeks.map(w => (
+                                <option key={w} value={w}>Settimana {w}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="relative flex-1">
+                              <input
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                required
+                                value={newWeight}
+                                onChange={(e) => {
+                                  if (e.target.value.includes('-')) return;
+                                  setNewWeight(e.target.value);
+                                }}
+                                placeholder="Carico"
+                                className="w-full bg-neutral-900 border border-neutral-800 rounded-xl py-3 pl-4 pr-10 text-white placeholder:text-neutral-600 focus:outline-none focus:border-lime-400 transition-colors font-bold text-lg"
+                              />
+                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 font-medium">kg</span>
+                            </div>
+                            <button 
+                              type="submit"
+                              className="bg-lime-400 text-black w-14 rounded-xl flex items-center justify-center hover:bg-lime-500 transition-colors"
+                            >
+                              <Plus className="w-6 h-6" />
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          )}
+
         </div>
       </div>
 

@@ -10,6 +10,7 @@ export interface Subscription {
   id: string;
   name: string;
   durationMonths: number;
+  durationDays?: number;
   cost: number;
   defaultInstallments?: number; // numero di rate predefinito
 }
@@ -73,6 +74,7 @@ export interface Client {
   id: string;
   name: string;
   email: string;
+  phone?: string; // <--- AGGIUNGI QUESTA RIGA
   password?: string;
   isRegistered?: boolean;
   workoutPlan: WorkoutDay[];

@@ -8,7 +8,15 @@ export const Subscriptions: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
-  const [formData, setFormData] = useState({ name: '', durationMonths: '1', cost: '', defaultInstallments: '1' });
+  
+  // Aggiunto durationDays allo state del form
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    durationMonths: '1', 
+    durationDays: '0', 
+    cost: '', 
+    defaultInstallments: '1' 
+  });
 
   const filteredSubscriptions = subscriptions.filter(s => 
     s.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -16,29 +24,43 @@ export const Subscriptions: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Convertiamo i valori. Se i mesi sono 0, leggiamo i giorni.
+    const months = parseInt(formData.durationMonths) || 0;
+    const days = parseInt(formData.durationDays) || 0;
+
     const payload = {
       name: formData.name,
-      durationMonths: parseInt(formData.durationMonths) || 1,
+      durationMonths: months,
+      durationDays: days,
       cost: parseFloat(formData.cost) || 0,
       defaultInstallments: parseInt(formData.defaultInstallments) || 1,
     };
+
     if (editingSubscription) {
       updateSubscription({ ...editingSubscription, ...payload });
     } else {
       addSubscription(payload);
     }
+    
     setIsModalOpen(false);
     setEditingSubscription(null);
-    setFormData({ name: '', durationMonths: '1', cost: '', defaultInstallments: '1' });
+    setFormData({ name: '', durationMonths: '1', durationDays: '0', cost: '', defaultInstallments: '1' });
   };
 
   const openModal = (sub?: Subscription) => {
     if (sub) {
       setEditingSubscription(sub);
-      setFormData({ name: sub.name, durationMonths: String(sub.durationMonths), cost: String(sub.cost), defaultInstallments: String(sub.defaultInstallments ?? 1) });
+      setFormData({ 
+        name: sub.name, 
+        durationMonths: String(sub.durationMonths), 
+        durationDays: String(sub.durationDays || 0), 
+        cost: String(sub.cost), 
+        defaultInstallments: String(sub.defaultInstallments ?? 1) 
+      });
     } else {
       setEditingSubscription(null);
-      setFormData({ name: '', durationMonths: '1', cost: '', defaultInstallments: '1' });
+      setFormData({ name: '', durationMonths: '1', durationDays: '0', cost: '', defaultInstallments: '1' });
     }
     setIsModalOpen(true);
   };
@@ -46,7 +68,7 @@ export const Subscriptions: React.FC = () => {
   const handleCancel = () => {
     setIsModalOpen(false);
     setEditingSubscription(null);
-    setFormData({ name: '', durationMonths: '1', cost: '', defaultInstallments: '1' });
+    setFormData({ name: '', durationMonths: '1', durationDays: '0', cost: '', defaultInstallments: '1' });
   };
 
   return (
@@ -84,7 +106,7 @@ export const Subscriptions: React.FC = () => {
             <thead>
               <tr className="bg-neutral-50 text-neutral-500 text-sm uppercase tracking-wider">
                 <th className="p-4 font-medium border-b border-neutral-200">Nome Abbonamento</th>
-                <th className="p-4 font-medium border-b border-neutral-200">Durata (Mesi)</th>
+                <th className="p-4 font-medium border-b border-neutral-200">Durata</th>
                 <th className="p-4 font-medium border-b border-neutral-200">Costo (€)</th>
                 <th className="p-4 font-medium border-b border-neutral-200">Rate Default</th>
                 <th className="p-4 font-medium border-b border-neutral-200 text-right">Azioni</th>
@@ -95,7 +117,13 @@ export const Subscriptions: React.FC = () => {
                 filteredSubscriptions.map((sub) => (
                   <tr key={sub.id} className="hover:bg-neutral-50 transition-colors">
                     <td className="p-4 font-medium text-neutral-900">{sub.name}</td>
-                    <td className="p-4 text-neutral-600">{sub.durationMonths} {sub.durationMonths === 1 ? 'Mese' : 'Mesi'}</td>
+                    <td className="p-4 text-neutral-600">
+                      {/* Logica di visualizzazione: Mesi o Giorni */}
+                      {sub.durationMonths > 0 
+                        ? `${sub.durationMonths} ${sub.durationMonths === 1 ? 'Mese' : 'Mesi'}`
+                        : `${sub.durationDays || 0} Giorni`
+                      }
+                    </td>
                     <td className="p-4 text-neutral-600 font-semibold">€{sub.cost.toFixed(2)}</td>
                     <td className="p-4 text-neutral-600">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
@@ -139,7 +167,7 @@ export const Subscriptions: React.FC = () => {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
             <div className="p-6 border-b border-neutral-200 flex justify-between items-center">
               <h2 className="text-xl font-bold text-neutral-900">
                 {editingSubscription ? 'Modifica Abbonamento' : 'Nuovo Abbonamento'}
@@ -157,24 +185,54 @@ export const Subscriptions: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="es. Annuale Standard"
+                  placeholder="es. Annuale, Ingresso Singolo, Settimanale..."
                 />
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Durata (Mesi)</label>
                   <input
                     type="number"
-                    min="1"
+                    min="0"
                     required
                     value={formData.durationMonths}
                     onChange={(e) => {
-                      if (e.target.value.includes('-')) return; // BLOCCO NEGATIVI
-                      setFormData({ ...formData, durationMonths: e.target.value });
+                      if (e.target.value.includes('-')) return;
+                      // Se imposta i mesi > 0, azzeriamo i giorni per chiarezza
+                      const val = e.target.value;
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        durationMonths: val,
+                        durationDays: Number(val) > 0 ? '0' : prev.durationDays 
+                      }));
                     }}
                     className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="es. 12"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Oppure in Giorni</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    disabled={Number(formData.durationMonths) > 0} // Disabilita se ci sono già mesi impostati
+                    value={formData.durationDays}
+                    onChange={(e) => {
+                      if (e.target.value.includes('-')) return;
+                      setFormData({ ...formData, durationDays: e.target.value });
+                    }}
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-neutral-100 disabled:text-neutral-400"
+                    placeholder="es. 1, 7, 15"
+                  />
+                  <span className="text-[10px] text-neutral-500 mt-1 block leading-tight">
+                    *Metti "0" sui mesi per abilitare i giorni.
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Costo (€)</label>
                   <input
@@ -184,7 +242,7 @@ export const Subscriptions: React.FC = () => {
                     required
                     value={formData.cost}
                     onChange={(e) => {
-                      if (e.target.value.includes('-')) return; // BLOCCO NEGATIVI
+                      if (e.target.value.includes('-')) return;
                       setFormData({ ...formData, cost: e.target.value });
                     }}
                     className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -199,7 +257,7 @@ export const Subscriptions: React.FC = () => {
                     required
                     value={formData.defaultInstallments}
                     onChange={(e) => {
-                      if (e.target.value.includes('-')) return; // BLOCCO NEGATIVI
+                      if (e.target.value.includes('-')) return;
                       setFormData({ ...formData, defaultInstallments: e.target.value });
                     }}
                     className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -207,6 +265,7 @@ export const Subscriptions: React.FC = () => {
                   />
                 </div>
               </div>
+
               <div className="pt-4 flex gap-3 justify-end">
                 <button
                   type="button"
