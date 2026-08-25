@@ -1,7 +1,26 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Client, Exercise, WorkoutDay, WorkoutExercise, ExerciseLog, BodyMeasurement, Subscription, ClientPayment } from './types';
+import { Client, Exercise, WorkoutDay, WorkoutExercise, ExerciseLog, BodyMeasurement, Subscription, ClientPayment, Lead, NutritionPlan } from './types';
+import { useStaff } from './store/useStaff';
+import { useRooms } from './store/useRooms';
+import { useClasses } from './store/useClasses';
+import { useCheckIns } from './store/useCheckIns';
+import { useEquipment } from './store/useEquipment';
+import { useExpenses } from './store/useExpenses';
+import { useLeads } from './store/useLeads';
+import { useGymSettings } from './store/useGymSettings';
+import { useAnnouncements } from './store/useAnnouncements';
+import { useProducts } from './store/useProducts';
 
-interface AppState {
+interface AppState extends
+  ReturnType<typeof useStaff>,
+  ReturnType<typeof useRooms>,
+  ReturnType<typeof useClasses>,
+  ReturnType<typeof useCheckIns>,
+  ReturnType<typeof useEquipment>,
+  ReturnType<typeof useExpenses>,
+  ReturnType<typeof useGymSettings>,
+  ReturnType<typeof useAnnouncements>,
+  ReturnType<typeof useProducts> {
   clients: Client[];
   exercises: Exercise[];
   addClient: (client: Omit<Client, 'id' | 'workoutPlan'>) => void;
@@ -26,6 +45,12 @@ interface AppState {
   deleteBodyMeasurement: (clientId: string, measurementId: string) => void;
   updateClientPayment: (clientId: string, payment: ClientPayment) => void;
   saveCustomPlan: (clientId: string, days: WorkoutDay[]) => void;
+  updateNutritionPlan: (clientId: string, plan: NutritionPlan) => void;
+  leads: Lead[];
+  addLead: (lead: Omit<Lead, 'id' | 'createdAt'>) => void;
+  updateLead: (lead: Lead) => void;
+  deleteLead: (id: string) => void;
+  convertLeadToClient: (leadId: string) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -51,6 +76,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saved = localStorage.getItem('gym_subscriptions');
     return saved ? JSON.parse(saved) : [];
   });
+
+  const staffStore = useStaff();
+  const roomsStore = useRooms();
+  const classesStore = useClasses();
+  const checkInsStore = useCheckIns();
+  const equipmentStore = useEquipment();
+  const expensesStore = useExpenses();
+  const leadsStore = useLeads();
+  const gymSettingsStore = useGymSettings();
+  const announcementsStore = useAnnouncements();
+  const productsStore = useProducts();
 
   useEffect(() => {
     localStorage.setItem('gym_clients', JSON.stringify(clients));
@@ -360,6 +396,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const updateNutritionPlan = (clientId: string, plan: NutritionPlan) => {
+    setClients(clients.map(c => {
+      if (c.id === clientId) {
+        return { ...c, nutritionPlan: plan };
+      }
+      return c;
+    }));
+  };
+
+  const convertLeadToClient = (leadId: string) => {
+    const lead = leadsStore.leads.find(l => l.id === leadId);
+    if (!lead) return;
+    addClient({ name: lead.name, email: lead.email || `${lead.name.toLowerCase().replace(/\s+/g, '.')}@senza-email.local`, phone: lead.phone });
+    leadsStore.updateLead({ ...lead, status: 'convertito' });
+  };
+
   return (
     <AppContext.Provider value={{
       clients, exercises, subscriptions,
@@ -370,7 +422,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addWorkoutExercise, deleteWorkoutExercise,
       registerClient, addExerciseLog, deleteExerciseLog, archiveWorkoutPlan,
       addBodyMeasurement, deleteBodyMeasurement, updateClientPayment,
-      saveCustomPlan
+      saveCustomPlan, updateNutritionPlan,
+      ...staffStore,
+      ...roomsStore,
+      ...classesStore,
+      ...checkInsStore,
+      ...equipmentStore,
+      ...expensesStore,
+      ...leadsStore,
+      ...gymSettingsStore,
+      ...announcementsStore,
+      ...productsStore,
+      convertLeadToClient,
     }}>
       {children}
     </AppContext.Provider>

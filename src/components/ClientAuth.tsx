@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Dumbbell, Mail, Lock, ArrowRight } from 'lucide-react';
 import { useAppContext } from '../store';
 
-export const ClientAuth: React.FC<{ onLogin: (clientId: string) => void, onManagerLogin: () => void }> = ({ onLogin, onManagerLogin }) => {
-  const { clients, registerClient } = useAppContext();
+export const ClientAuth: React.FC<{ onLogin: (clientId: string) => void, onManagerLogin: () => void, onStaffLogin: (staffId: string) => void }> = ({ onLogin, onManagerLogin, onStaffLogin }) => {
+  const { clients, registerClient, staff } = useAppContext();
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,6 +24,16 @@ export const ClientAuth: React.FC<{ onLogin: (clientId: string) => void, onManag
       // Login logic
       if (email === 'admin' && password === 'admin') {
         onManagerLogin();
+        return;
+      }
+
+      const staffMember = staff.find(s => s.accountEnabled && s.email.toLowerCase() === email.toLowerCase());
+      if (staffMember) {
+        if (staffMember.password !== password) {
+          setError('Credenziali non valide.');
+          return;
+        }
+        onStaffLogin(staffMember.id);
         return;
       }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Clock, ChevronDown, Plus, Dumbbell, CreditCard, Calendar, CheckCircle2, AlertCircle, Clock3, Euro, Edit2, Trash2, Save } from 'lucide-react';
+import { LogOut, Clock, ChevronDown, Plus, Dumbbell, CreditCard, Calendar, CheckCircle2, AlertCircle, Clock3, Euro, Edit2, Trash2, Save, CalendarDays, DoorOpen, Users, Apple } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppContext } from '../store';
 import { ExerciseAnimation } from './ExerciseAnimation';
@@ -10,10 +10,10 @@ import { WorkoutDay, WorkoutExercise } from '../types';
 export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void }> = ({ clientId, onLogout }) => {
   const { clients, exercises, subscriptions, saveCustomPlan } = useAppContext();
   const client = clients.find(c => c.id === clientId);
-  
+
   const [selectedPlanId, setSelectedPlanId] = useState<string>('current');
   const [activeDayId, setActiveDayId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'workout' | 'progress' | 'subscription' | 'builder'>('workout');
+  const [activeTab, setActiveTab] = useState<'workout' | 'progress' | 'subscription' | 'builder' | 'classes' | 'nutrition'>('workout');
 
   React.useEffect(() => {
     if (!client) return;
@@ -61,19 +61,31 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
           >
             Scheda
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('builder')}
             className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'builder' ? 'bg-lime-400 text-black' : 'text-neutral-400 hover:text-white'}`}
           >
             Crea Scheda
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('progress')}
             className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'progress' ? 'bg-lime-400 text-black' : 'text-neutral-400 hover:text-white'}`}
           >
             Progressi
           </button>
-          <button 
+          <button
+            onClick={() => setActiveTab('classes')}
+            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'classes' ? 'bg-lime-400 text-black' : 'text-neutral-400 hover:text-white'}`}
+          >
+            Corsi
+          </button>
+          <button
+            onClick={() => setActiveTab('nutrition')}
+            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'nutrition' ? 'bg-lime-400 text-black' : 'text-neutral-400 hover:text-white'}`}
+          >
+            Nutrizione
+          </button>
+          <button
             onClick={() => setActiveTab('subscription')}
             className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'subscription' ? 'bg-lime-400 text-black' : 'text-neutral-400 hover:text-white'}`}
           >
@@ -84,6 +96,10 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
 
       {activeTab === 'progress' ? (
         <ClientProgress client={client} />
+      ) : activeTab === 'classes' ? (
+        <ClassesTab client={client} />
+      ) : activeTab === 'nutrition' ? (
+        <NutritionTab client={client} />
       ) : activeTab === 'subscription' ? (
         <SubscriptionTab client={client} subscriptions={subscriptions} />
       ) : activeTab === 'builder' ? (
@@ -174,6 +190,182 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
             </>
           )}
         </>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// TAB CORSI (self-service)
+// ============================================================================
+const DAY_LABELS = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
+
+const ClassesTab: React.FC<{ client: any }> = ({ client }) => {
+  const { gymClasses, classBookings, rooms, staff, bookClass, cancelBooking, checkInClient } = useAppContext();
+  const [checkInMessage, setCheckInMessage] = useState('');
+
+  const handleSelfCheckIn = () => {
+    checkInClient(client.id, 'sala_pesi');
+    setCheckInMessage('Check-in registrato! Buon allenamento 💪');
+    setTimeout(() => setCheckInMessage(''), 4000);
+  };
+
+  const nextDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+
+  const occurrences = nextDays.flatMap(date => {
+    const dateStr = date.toISOString().split('T')[0];
+    const dayOfWeek = date.getDay();
+    return gymClasses
+      .flatMap(c => c.schedule.filter(s => s.dayOfWeek === dayOfWeek).map(s => ({ gymClass: c, startTime: s.startTime, date: dateStr, dateObj: date })))
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  });
+
+  return (
+    <div className="px-6 py-6 space-y-6 animate-in fade-in duration-300">
+      <div className="bg-neutral-900 rounded-3xl p-6 border border-neutral-800">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-lime-400/10 flex items-center justify-center">
+            <DoorOpen className="w-5 h-5 text-lime-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">Sala Pesi</h2>
+            <p className="text-neutral-400 text-sm">Registra il tuo ingresso quando arrivi in palestra</p>
+          </div>
+        </div>
+        <button onClick={handleSelfCheckIn} className="w-full py-4 bg-lime-400 text-black font-bold rounded-2xl hover:bg-lime-500 transition-colors">
+          Segna il mio ingresso
+        </button>
+        {checkInMessage && <p className="text-lime-400 text-sm font-medium text-center mt-3">{checkInMessage}</p>}
+      </div>
+
+      <div>
+        <h2 className="text-xl font-bold text-white mb-4 px-1">Prossimi 7 giorni</h2>
+        {occurrences.length === 0 ? (
+          <div className="bg-neutral-900 rounded-3xl p-8 border border-neutral-800 text-center text-neutral-500">
+            Nessun corso in programma questa settimana.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {occurrences.map(({ gymClass, startTime, date, dateObj }) => {
+              const bookingsForOccurrence = classBookings.filter(b => b.classId === gymClass.id && b.date === date && b.status !== 'cancellata');
+              const confirmedCount = bookingsForOccurrence.filter(b => b.status === 'confermata').length;
+              const myBooking = bookingsForOccurrence.find(b => b.clientId === client.id);
+              const instructor = staff.find((s: any) => s.id === gymClass.staffId);
+              const room = rooms.find((r: any) => r.id === gymClass.roomId);
+
+              return (
+                <div key={gymClass.id + date} className="bg-neutral-900 rounded-2xl p-4 border border-neutral-800" style={{ borderLeftWidth: '4px', borderLeftColor: gymClass.color }}>
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-bold text-white">{gymClass.name}</h3>
+                      <p className="text-xs text-neutral-500">{DAY_LABELS[dateObj.getDay()]} · {instructor?.name || 'Nessun istruttore'} · {room?.name || 'Nessuna sala'}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-neutral-300 flex items-center gap-1 flex-shrink-0"><Clock className="w-3.5 h-3.5" />{startTime}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-xs font-medium text-neutral-400 flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {confirmedCount}/{gymClass.capacity}</span>
+                    {myBooking ? (
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${myBooking.status === 'waitlist' ? 'bg-amber-400/10 text-amber-400' : 'bg-lime-400/10 text-lime-400'}`}>
+                          {myBooking.status === 'waitlist' ? 'In lista d\'attesa' : 'Prenotato'}
+                        </span>
+                        <button onClick={() => cancelBooking(myBooking.id)} className="text-xs font-bold text-red-400 hover:text-red-300 px-3 py-1.5">Disdici</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => bookClass(gymClass.id, client.id, date)} className="text-xs font-bold bg-lime-400 text-black px-4 py-1.5 rounded-full hover:bg-lime-500 transition-colors">
+                        Prenota
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// TAB NUTRIZIONE (sola lettura)
+// ============================================================================
+const NutritionTab: React.FC<{ client: any }> = ({ client }) => {
+  const plan = client.nutritionPlan;
+
+  if (!plan) {
+    return (
+      <div className="p-6 text-center mt-10 animate-in fade-in duration-300">
+        <div className="w-20 h-20 bg-neutral-900 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Apple className="w-10 h-10 text-neutral-600" />
+        </div>
+        <h2 className="text-xl font-bold mb-2 text-white">Nessun Piano Alimentare</h2>
+        <p className="text-neutral-500">Il tuo piano alimentare non è ancora stato impostato dal gestore.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-6 py-6 space-y-6 animate-in fade-in duration-300">
+      <div className="bg-neutral-900 rounded-3xl p-6 border border-neutral-800">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-lime-400/10 flex items-center justify-center">
+            <Apple className="w-5 h-5 text-lime-400" />
+          </div>
+          <h2 className="text-xl font-bold text-white">{plan.title}</h2>
+        </div>
+        {(plan.dailyCalories || plan.dailyProtein || plan.dailyCarbs || plan.dailyFat) && (
+          <div className="grid grid-cols-4 gap-3">
+            {plan.dailyCalories !== undefined && (
+              <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 text-center">
+                <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-wider">Kcal</p>
+                <p className="text-white font-bold">{plan.dailyCalories}</p>
+              </div>
+            )}
+            {plan.dailyProtein !== undefined && (
+              <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 text-center">
+                <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-wider">Prot.</p>
+                <p className="text-white font-bold">{plan.dailyProtein}g</p>
+              </div>
+            )}
+            {plan.dailyCarbs !== undefined && (
+              <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 text-center">
+                <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-wider">Carb.</p>
+                <p className="text-white font-bold">{plan.dailyCarbs}g</p>
+              </div>
+            )}
+            {plan.dailyFat !== undefined && (
+              <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 text-center">
+                <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-wider">Grassi</p>
+                <p className="text-white font-bold">{plan.dailyFat}g</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {plan.meals.length > 0 && (
+        <div className="space-y-3">
+          {plan.meals.map((meal: any) => (
+            <div key={meal.id} className="bg-neutral-900 rounded-2xl p-4 border border-neutral-800">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-bold text-white text-sm">{meal.name}</span>
+                {meal.time && <span className="text-xs text-neutral-500">{meal.time}</span>}
+              </div>
+              <p className="text-sm text-neutral-400 whitespace-pre-wrap">{meal.items}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {plan.notes && (
+        <div className="bg-neutral-900/50 p-4 rounded-2xl border border-neutral-800/50">
+          <p className="text-neutral-400 text-sm italic">"{plan.notes}"</p>
+        </div>
       )}
     </div>
   );

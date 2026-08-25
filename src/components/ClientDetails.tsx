@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Plus, Trash2, Dumbbell, Clock, Repeat, X, CreditCard, CheckCircle2, AlertCircle, Clock3, Search, ChevronDown, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Dumbbell, Clock, Repeat, X, CreditCard, CheckCircle2, AlertCircle, Clock3, Search, ChevronDown, Check, Apple, Edit2 } from 'lucide-react';
 import { useAppContext } from '../store';
-import { Client, WorkoutDay } from '../types';
+import { Client, WorkoutDay, NutritionMeal } from '../types';
 
 interface ClientDetailsProps {
   client: Client;
@@ -94,9 +94,62 @@ const SearchableExerciseSelect = ({ exercises, value, onChange }: { exercises: a
 };
 // ────────────────────────────────────────────────────────
 
+const emptyNutritionForm = { title: '', dailyCalories: '', dailyProtein: '', dailyCarbs: '', dailyFat: '', notes: '', meals: [] as NutritionMeal[] };
+
 export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) => {
-  const { exercises, subscriptions, addWorkoutDay, deleteWorkoutDay, addWorkoutExercise, deleteWorkoutExercise, archiveWorkoutPlan } = useAppContext();
-  
+  const { exercises, subscriptions, addWorkoutDay, deleteWorkoutDay, addWorkoutExercise, deleteWorkoutExercise, archiveWorkoutPlan, updateNutritionPlan } = useAppContext();
+
+  const [isNutritionModalOpen, setIsNutritionModalOpen] = useState(false);
+  const [nutritionForm, setNutritionForm] = useState(emptyNutritionForm);
+
+  const openNutritionModal = () => {
+    const plan = client.nutritionPlan;
+    if (plan) {
+      setNutritionForm({
+        title: plan.title,
+        dailyCalories: plan.dailyCalories !== undefined ? String(plan.dailyCalories) : '',
+        dailyProtein: plan.dailyProtein !== undefined ? String(plan.dailyProtein) : '',
+        dailyCarbs: plan.dailyCarbs !== undefined ? String(plan.dailyCarbs) : '',
+        dailyFat: plan.dailyFat !== undefined ? String(plan.dailyFat) : '',
+        notes: plan.notes || '',
+        meals: [...plan.meals],
+      });
+    } else {
+      setNutritionForm(emptyNutritionForm);
+    }
+    setIsNutritionModalOpen(true);
+  };
+
+  const closeNutritionModal = () => { setIsNutritionModalOpen(false); setNutritionForm(emptyNutritionForm); };
+
+  const addMeal = () => {
+    setNutritionForm(prev => ({ ...prev, meals: [...prev.meals, { id: crypto.randomUUID(), name: '', time: '', items: '' }] }));
+  };
+
+  const removeMeal = (id: string) => {
+    setNutritionForm(prev => ({ ...prev, meals: prev.meals.filter(m => m.id !== id) }));
+  };
+
+  const updateMeal = (id: string, field: keyof NutritionMeal, value: string) => {
+    setNutritionForm(prev => ({ ...prev, meals: prev.meals.map(m => m.id === id ? { ...m, [field]: value } : m) }));
+  };
+
+  const handleSaveNutrition = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateNutritionPlan(client.id, {
+      id: client.nutritionPlan?.id || crypto.randomUUID(),
+      title: nutritionForm.title,
+      dailyCalories: nutritionForm.dailyCalories ? parseFloat(nutritionForm.dailyCalories) : undefined,
+      dailyProtein: nutritionForm.dailyProtein ? parseFloat(nutritionForm.dailyProtein) : undefined,
+      dailyCarbs: nutritionForm.dailyCarbs ? parseFloat(nutritionForm.dailyCarbs) : undefined,
+      dailyFat: nutritionForm.dailyFat ? parseFloat(nutritionForm.dailyFat) : undefined,
+      notes: nutritionForm.notes || undefined,
+      meals: nutritionForm.meals,
+      updatedAt: new Date().toISOString(),
+    });
+    closeNutritionModal();
+  };
+
   const [isDayModalOpen, setIsDayModalOpen] = useState(false);
   const [newDayName, setNewDayName] = useState('');
   
@@ -316,6 +369,61 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
         );
       })()}
 
+      {/* ─── Piano Alimentare ─── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
+        <div className="p-4 border-b border-neutral-200 flex items-center gap-2">
+          <Apple className="w-5 h-5 text-green-600" />
+          <h2 className="text-lg font-semibold text-neutral-900">Piano Alimentare</h2>
+          <button
+            onClick={openNutritionModal}
+            className="ml-auto text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+          >
+            {client.nutritionPlan ? <><Edit2 className="w-3.5 h-3.5" /> Modifica</> : <><Plus className="w-3.5 h-3.5" /> Crea Piano</>}
+          </button>
+        </div>
+        <div className="p-4">
+          {!client.nutritionPlan ? (
+            <p className="text-sm text-neutral-400 italic text-center py-4">Nessun piano alimentare impostato.</p>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h3 className="font-semibold text-neutral-900">{client.nutritionPlan.title}</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {client.nutritionPlan.dailyCalories !== undefined && (
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-700">{client.nutritionPlan.dailyCalories} kcal</span>
+                  )}
+                  {client.nutritionPlan.dailyProtein !== undefined && (
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-700">P {client.nutritionPlan.dailyProtein}g</span>
+                  )}
+                  {client.nutritionPlan.dailyCarbs !== undefined && (
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700">C {client.nutritionPlan.dailyCarbs}g</span>
+                  )}
+                  {client.nutritionPlan.dailyFat !== undefined && (
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-red-50 text-red-700">G {client.nutritionPlan.dailyFat}g</span>
+                  )}
+                </div>
+              </div>
+              {client.nutritionPlan.meals.length > 0 && (
+                <div className="space-y-2">
+                  {client.nutritionPlan.meals.map(meal => (
+                    <div key={meal.id} className="p-3 bg-neutral-50 rounded-xl border border-neutral-200">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-neutral-900 text-sm">{meal.name}</span>
+                        {meal.time && <span className="text-xs text-neutral-400">{meal.time}</span>}
+                      </div>
+                      <p className="text-sm text-neutral-600 whitespace-pre-wrap">{meal.items}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {client.nutritionPlan.notes && (
+                <p className="text-sm text-neutral-500 italic border-t border-neutral-100 pt-3">{client.nutritionPlan.notes}</p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-neutral-200">
         <h2 className="text-lg font-semibold text-neutral-900">Giorni di Allenamento (Attuale)</h2>
         <div className="flex gap-2">
@@ -488,6 +596,71 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
         </div>
       )}
 
+      {/* Modal Nuovo Giorno */}
+      {isDayModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div className="p-5 border-b border-neutral-200 flex justify-between items-center">
+              <h2 className="text-lg font-bold text-neutral-900">Nuovo Giorno</h2>
+              <button onClick={() => { setIsDayModalOpen(false); setNewDayName(''); }} className="text-neutral-400 hover:text-neutral-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleAddDay} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Nome Giorno</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={newDayName}
+                  onChange={(e) => setNewDayName(e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="es. Giorno 1 - Petto/Tricipiti"
+                />
+              </div>
+              <div className="pt-2 flex gap-3 justify-end">
+                <button type="button" onClick={() => { setIsDayModalOpen(false); setNewDayName(''); }} className="px-4 py-2 text-neutral-600 font-medium hover:bg-neutral-100 rounded-lg transition-colors">Annulla</button>
+                <button type="submit" className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors">Aggiungi</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Archivia Scheda */}
+      {isArchiveModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div className="p-5 border-b border-neutral-200 flex justify-between items-center">
+              <h2 className="text-lg font-bold text-neutral-900">Archivia Scheda</h2>
+              <button onClick={() => { setIsArchiveModalOpen(false); setArchivePlanName(''); }} className="text-neutral-400 hover:text-neutral-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleArchivePlan} className="p-5 space-y-4">
+              <p className="text-sm text-neutral-500">La scheda attuale verrà salvata nello storico e i giorni verranno svuotati per crearne una nuova.</p>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Nome Scheda</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={archivePlanName}
+                  onChange={(e) => setArchivePlanName(e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="es. Scheda Aprile 2026"
+                />
+              </div>
+              <div className="pt-2 flex gap-3 justify-end">
+                <button type="button" onClick={() => { setIsArchiveModalOpen(false); setArchivePlanName(''); }} className="px-4 py-2 text-neutral-600 font-medium hover:bg-neutral-100 rounded-lg transition-colors">Annulla</button>
+                <button type="submit" className="px-4 py-2 bg-neutral-800 text-white font-medium hover:bg-neutral-900 rounded-lg transition-colors">Archivia</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Modal Aggiungi Esercizio */}
       {isExerciseModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -600,6 +773,91 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                   </div>
                 </>
               )}
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Piano Alimentare */}
+      {isNutritionModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="p-6 border-b border-neutral-200 flex justify-between items-center flex-shrink-0">
+              <h2 className="text-xl font-bold text-neutral-900">{client.nutritionPlan ? 'Modifica Piano Alimentare' : 'Nuovo Piano Alimentare'}</h2>
+              <button onClick={closeNutritionModal} className="text-neutral-400 hover:text-neutral-600"><X className="w-6 h-6" /></button>
+            </div>
+            <form onSubmit={handleSaveNutrition} className="p-6 space-y-4 overflow-y-auto">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Titolo</label>
+                <input type="text" required value={nutritionForm.title} onChange={(e) => setNutritionForm({ ...nutritionForm, title: e.target.value })}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="es. Piano Definizione" />
+              </div>
+              <div className="grid grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1">Kcal</label>
+                  <input type="number" min="0" value={nutritionForm.dailyCalories}
+                    onChange={(e) => { if (e.target.value.includes('-')) return; setNutritionForm({ ...nutritionForm, dailyCalories: e.target.value }); }}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1">Prot. (g)</label>
+                  <input type="number" min="0" value={nutritionForm.dailyProtein}
+                    onChange={(e) => { if (e.target.value.includes('-')) return; setNutritionForm({ ...nutritionForm, dailyProtein: e.target.value }); }}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1">Carb. (g)</label>
+                  <input type="number" min="0" value={nutritionForm.dailyCarbs}
+                    onChange={(e) => { if (e.target.value.includes('-')) return; setNutritionForm({ ...nutritionForm, dailyCarbs: e.target.value }); }}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1">Grassi (g)</label>
+                  <input type="number" min="0" value={nutritionForm.dailyFat}
+                    onChange={(e) => { if (e.target.value.includes('-')) return; setNutritionForm({ ...nutritionForm, dailyFat: e.target.value }); }}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-neutral-700">Pasti</label>
+                  <button type="button" onClick={addMeal} className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                    <Plus className="w-4 h-4" /> Aggiungi Pasto
+                  </button>
+                </div>
+                {nutritionForm.meals.length === 0 ? (
+                  <div className="text-center py-6 border border-dashed border-neutral-300 rounded-xl text-neutral-400 text-sm">Nessun pasto configurato</div>
+                ) : (
+                  <div className="space-y-3">
+                    {nutritionForm.meals.map((meal) => (
+                      <div key={meal.id} className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <input type="text" value={meal.name} onChange={(e) => updateMeal(meal.id, 'name', e.target.value)}
+                            placeholder="es. Colazione" className="flex-1 px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                          <input type="time" value={meal.time || ''} onChange={(e) => updateMeal(meal.id, 'time', e.target.value)}
+                            className="w-28 px-2 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                          <button type="button" onClick={() => removeMeal(meal.id)} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"><X className="w-4 h-4" /></button>
+                        </div>
+                        <textarea value={meal.items} onChange={(e) => updateMeal(meal.id, 'items', e.target.value)} rows={2}
+                          placeholder="es. Petto di pollo 150g, riso 80g, verdure"
+                          className="w-full px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Note</label>
+                <textarea value={nutritionForm.notes} onChange={(e) => setNutritionForm({ ...nutritionForm, notes: e.target.value })} rows={2}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Note aggiuntive per il cliente..." />
+              </div>
+
+              <div className="pt-2 flex gap-3 justify-end">
+                <button type="button" onClick={closeNutritionModal} className="px-4 py-2 text-neutral-600 font-medium hover:bg-neutral-100 rounded-lg transition-colors">Annulla</button>
+                <button type="submit" className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors">Salva</button>
+              </div>
             </form>
           </div>
         </div>

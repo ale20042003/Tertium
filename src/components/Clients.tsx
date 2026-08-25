@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Search, Trash2, Edit2, ChevronRight, X, Euro, CheckCircle2, Circle, ArrowUpDown } from 'lucide-react';
 import { useAppContext } from '../store';
-import { Client, ClientPayment, PaymentInstallment } from '../types';
+import { Client, ClientPayment, PaymentInstallment, PaymentMethod } from '../types';
 import { ClientDetails } from './ClientDetails';
 
 export const Clients: React.FC = () => {
@@ -10,13 +10,13 @@ export const Clients: React.FC = () => {
   const [sortBy, setSortBy] = useState('alphabetical'); 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', subscriptionId: '', subscriptionStart: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', subscriptionId: '', subscriptionStart: '', birthDate: '', medicalCertificateExpiry: '' });
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Payment modal state
   const [paymentClientId, setPaymentClientId] = useState<string | null>(null);
-  const [paymentForm, setPaymentForm] = useState<{ amountPaid: string; installments: { id: string; dueDate: string; amount: string; paid: boolean }[] }>({
+  const [paymentForm, setPaymentForm] = useState<{ amountPaid: string; installments: { id: string; dueDate: string; amount: string; paid: boolean; method?: PaymentMethod }[] }>({
     amountPaid: '',
     installments: [],
   });
@@ -78,16 +78,18 @@ export const Clients: React.FC = () => {
   const openModal = (client?: Client) => {
     if (client) {
       setEditingClient(client);
-      setFormData({ 
-        name: client.name, 
-        email: client.email, 
-        phone: client.phone || '', 
-        subscriptionId: client.subscriptionId || '', 
-        subscriptionStart: client.subscriptionStart || '' 
+      setFormData({
+        name: client.name,
+        email: client.email,
+        phone: client.phone || '',
+        subscriptionId: client.subscriptionId || '',
+        subscriptionStart: client.subscriptionStart || '',
+        birthDate: client.birthDate || '',
+        medicalCertificateExpiry: client.medicalCertificateExpiry || '',
       });
     } else {
       setEditingClient(null);
-      setFormData({ name: '', email: '', phone: '', subscriptionId: '', subscriptionStart: '' });
+      setFormData({ name: '', email: '', phone: '', subscriptionId: '', subscriptionStart: '', birthDate: '', medicalCertificateExpiry: '' });
     }
     setIsModalOpen(true);
   };
@@ -95,7 +97,7 @@ export const Clients: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingClient(null);
-    setFormData({ name: '', email: '', phone: '', subscriptionId: '', subscriptionStart: '' });
+    setFormData({ name: '', email: '', phone: '', subscriptionId: '', subscriptionStart: '', birthDate: '', medicalCertificateExpiry: '' });
     setError(null);
   };
 
@@ -141,7 +143,7 @@ export const Clients: React.FC = () => {
   };
 
   const updateInstallment = (id: string, field: string, value: string | boolean) => {
-    if (typeof value === 'string' && value.includes('-')) return;
+    if (field !== 'method' && typeof value === 'string' && value.includes('-')) return;
 
     setPaymentForm(prev => {
       const updated = prev.installments.map(i => i.id === id ? { ...i, [field]: value } : i);
@@ -168,6 +170,7 @@ export const Clients: React.FC = () => {
         dueDate: i.dueDate,
         amount: parseFloat(i.amount) || 0,
         paid: i.paid,
+        method: i.method || undefined,
       })),
     };
     updateClientPayment(paymentClientId, payment);
@@ -367,7 +370,7 @@ export const Clients: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Telefono</label>
-                  <input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="es. 333 1234567" />
                 </div>
               </div>
@@ -392,7 +395,20 @@ export const Clients: React.FC = () => {
                     disabled={!formData.subscriptionId} />
                 </div>
               </div>
-              
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Data di Nascita</label>
+                  <input type="date" value={formData.birthDate} onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Scadenza Cert. Medico</label>
+                  <input type="date" value={formData.medicalCertificateExpiry} onChange={(e) => setFormData({ ...formData, medicalCertificateExpiry: e.target.value })}
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+              </div>
+
               <div className="pt-4 flex gap-3 justify-end">
                 <button type="button" onClick={closeModal} className="px-4 py-2 text-neutral-600 font-medium hover:bg-neutral-100 rounded-lg transition-colors">Annulla</button>
                 <button type="submit" className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors">Salva</button>
@@ -469,40 +485,59 @@ export const Clients: React.FC = () => {
                 ) : (
                   <div className="space-y-3">
                     {paymentForm.installments.map((inst, idx) => (
-                      <div key={inst.id} className="flex items-center gap-2 p-3 bg-neutral-50 rounded-xl border border-neutral-200">
-                        <span className="text-xs font-bold text-neutral-400 w-5 flex-shrink-0">#{idx + 1}</span>
-                        <input
-                          type="date"
-                          value={inst.dueDate}
-                          onChange={(e) => updateInstallment(inst.id, 'dueDate', e.target.value)}
-                          className="flex-1 px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                        />
-                        <div className="relative w-28 flex-shrink-0">
-                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">€</span>
+                      <div key={inst.id} className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-neutral-400 w-5 flex-shrink-0">#{idx + 1}</span>
                           <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={inst.amount}
-                            onChange={(e) => updateInstallment(inst.id, 'amount', e.target.value)}
-                            className="w-full pl-6 pr-2 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="0.00"
+                            type="date"
+                            value={inst.dueDate}
+                            onChange={(e) => updateInstallment(inst.id, 'dueDate', e.target.value)}
+                            className="flex-1 px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                           />
+                          <div className="relative w-28 flex-shrink-0">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">€</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={inst.amount}
+                              onChange={(e) => updateInstallment(inst.id, 'amount', e.target.value)}
+                              className="w-full pl-6 pr-2 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                              placeholder="0.00"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => updateInstallment(inst.id, 'paid', !inst.paid)}
+                            className={`p-1 rounded-lg transition-colors flex-shrink-0 ${inst.paid ? 'text-green-600 hover:bg-green-50' : 'text-neutral-400 hover:bg-neutral-100'}`}
+                          >
+                            {inst.paid ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeInstallment(inst.id)}
+                            className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => updateInstallment(inst.id, 'paid', !inst.paid)}
-                          className={`p-1 rounded-lg transition-colors flex-shrink-0 ${inst.paid ? 'text-green-600 hover:bg-green-50' : 'text-neutral-400 hover:bg-neutral-100'}`}
-                        >
-                          {inst.paid ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeInstallment(inst.id)}
-                          className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                        {inst.paid && (
+                          <div className="flex items-center gap-2 pl-7">
+                            <span className="text-xs text-neutral-500">Metodo:</span>
+                            <select
+                              value={inst.method || ''}
+                              onChange={(e) => updateInstallment(inst.id, 'method', e.target.value)}
+                              className="px-2 py-1 border border-neutral-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                            >
+                              <option value="">Non specificato</option>
+                              <option value="contanti">Contanti</option>
+                              <option value="carta">Carta</option>
+                              <option value="bonifico">Bonifico</option>
+                              <option value="pos">POS</option>
+                              <option value="altro">Altro</option>
+                            </select>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

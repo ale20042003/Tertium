@@ -9,7 +9,7 @@ import { Dashboard } from './components/Dashboard';
 import { ClientAuth } from './components/ClientAuth';
 import { ClientDashboard } from './components/ClientDashboard';
 
-type AuthState = { type: 'manager' } | { type: 'client', clientId: string } | null;
+type AuthState = { type: 'manager' } | { type: 'staff', staffId: string } | { type: 'client', clientId: string } | null;
 
 export default function App() {
   const [auth, setAuth] = useState<AuthState>(() => {
@@ -19,6 +19,12 @@ export default function App() {
 
   const handleManagerLogin = () => {
     const state = { type: 'manager' as const };
+    setAuth(state);
+    localStorage.setItem('gym_auth', JSON.stringify(state));
+  };
+
+  const handleStaffLogin = (staffId: string) => {
+    const state = { type: 'staff' as const, staffId };
     setAuth(state);
     localStorage.setItem('gym_auth', JSON.stringify(state));
   };
@@ -36,12 +42,14 @@ export default function App() {
 
   return (
     <AppProvider>
-      {auth?.type === 'manager' && <Dashboard onLogout={handleLogout} />}
+      {auth?.type === 'manager' && <Dashboard onLogout={handleLogout} viewer={{ type: 'manager' }} />}
+      {auth?.type === 'staff' && <Dashboard onLogout={handleLogout} viewer={{ type: 'staff', staffId: auth.staffId }} />}
       {auth?.type === 'client' && <ClientDashboard clientId={auth.clientId} onLogout={handleLogout} />}
       {auth === null && (
         <ClientAuth
           onLogin={handleClientLogin}
           onManagerLogin={handleManagerLogin}
+          onStaffLogin={handleStaffLogin}
         />
       )}
     </AppProvider>

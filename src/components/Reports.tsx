@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { PieChart as PieIcon, Activity, Dumbbell, CreditCard, Calendar, TrendingUp, AlertTriangle, CheckCircle2, Clock3 } from 'lucide-react';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { PieChart as PieIcon, Activity, Dumbbell, CreditCard, Calendar, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Clock3, Wallet, Cake, FileWarning, UserCog, Wrench, Target, CalendarDays, Flame, Store } from 'lucide-react';
 import { useAppContext } from '../store';
 
 export const Reports: React.FC = () => {
-  const { clients, exercises, subscriptions } = useAppContext();
+  const { clients, exercises, subscriptions, expenses, staff, gymClasses, classBookings, checkIns, equipment, leads, sales, products } = useAppContext();
   const [periodFilter, setPeriodFilter] = useState<string>('all');
   const [subscriptionFilter, setSubscriptionFilter] = useState<string>('all');
 
@@ -113,6 +113,163 @@ export const Reports: React.FC = () => {
         return 0;
       });
   }, [clients, subscriptions]);
+
+  // ─── Finanza: spese, utile netto, entrate vs uscite per mese ──
+  const financeData = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const totalSpese = expenses.reduce((s, e) => s + e.amount, 0);
+    const totalRicaviProdotti = sales.reduce((s, sale) => s + sale.total, 0);
+    const utileNetto = kpi.totalIncassato + totalRicaviProdotti - totalSpese;
+
+    const byCategory: Record<string, number> = {};
+    expenses.forEach(e => { byCategory[e.category] = (byCategory[e.category] || 0) + e.amount; });
+
+    const monthObj: Record<string, { period: string; entrate: number; uscite: number; sortKey: string }> = {};
+    const monthNames = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+    const ensureMonth = (dateStr: string) => {
+      const d = new Date(dateStr + (dateStr.length === 10 ? 'T00:00:00' : ''));
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!monthObj[key]) monthObj[key] = { period: `${monthNames[d.getMonth()]} ${d.getFullYear()}`, entrate: 0, uscite: 0, sortKey: key };
+      return monthObj[key];
+    };
+    clients.forEach(c => {
+      if (c.subscriptionStart && c.payment) ensureMonth(c.subscriptionStart).entrate += c.payment.amountPaid;
+    });
+    expenses.forEach(e => { ensureMonth(e.date).uscite += e.amount; });
+
+    sales.forEach(s => { ensureMonth(s.date).entrate += s.total; });
+
+    const monthlyChart = Object.values(monthObj).sort((a, b) => a.sortKey.localeCompare(b.sortKey)).map(({ sortKey, ...rest }) => rest);
+
+    return { totalSpese, totalRicaviProdotti, utileNetto, byCategory, monthlyChart };
+  }, [expenses, clients, sales, kpi.totalIncassato]);
+
+  // ─── Clienti: nuovi, attivi/scaduti, rinnovo, compleanni, certificati ──
+  const clientMetrics = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const nuoviQuestoMese = clients.filter(c => c.subscriptionStart && new Date(c.subscriptionStart) >= startOfMonth).length;
+
+    let attivi = 0, scaduti = 0;
+    clients.forEach(c => {
+      if (!c.subscriptionEnd) return;
+      const end = new Date(c.subscriptionEnd);
+      if (end >= today) attivi++; else scaduti++;
+    });
+    const tassoRinnovo = (attivi + scaduti) > 0 ? Math.round((attivi / (attivi + scaduti)) * 100) : 0;
+
+    const compleanniMese = clients.filter(c => {
+      if (!c.birthDate) return false;
+      const bd = new Date(c.birthDate + 'T00:00:00');
+      return bd.getMonth() === today.getMonth();
+    });
+
+    const certificatiInScadenza = clients.filter(c => {
+      if (!c.medicalCertificateExpiry) return false;
+      const exp = new Date(c.medicalCertificateExpiry + 'T00:00:00');
+      return exp <= in30;
+    }).sort((a, b) => (a.medicalCertificateExpiry || '').localeCompare(b.medicalCertificateExpiry || ''));
+
+    return { nuoviQuestoMese, attivi, scaduti, tassoRinnovo, compleanniMese, certificatiInScadenza };
+  }, [clients]);
+
+  // ─── Abbonamenti in scadenza ────────────────────────────────
+  const subscriptionExpiry = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const in7 = new Date(today); in7.setDate(in7.getDate() + 7);
+    const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
+
+    const inScadenza7 = clients.filter(c => c.subscriptionEnd && new Date(c.subscriptionEnd) >= today && new Date(c.subscriptionEnd) <= in7);
+    const inScadenza30 = clients.filter(c => c.subscriptionEnd && new Date(c.subscriptionEnd) >= today && new Date(c.subscriptionEnd) <= in30);
+    const scadutiNonRinnovati = clients.filter(c => c.subscriptionEnd && new Date(c.subscriptionEnd) < today);
+
+    return { inScadenza7, inScadenza30, scadutiNonRinnovati };
+  }, [clients]);
+
+  // ─── Corsi & Presenze ───────────────────────────────────────
+  const classMetrics = useMemo(() => {
+    const activeBookings = classBookings.filter(b => b.status !== 'cancellata');
+
+    const popolarita = gymClasses.map(c => ({
+      name: c.name,
+      prenotazioni: activeBookings.filter(b => b.classId === c.id).length,
+      capacity: c.capacity,
+    })).sort((a, b) => b.prenotazioni - a.prenotazioni).slice(0, 6);
+
+    // Tasso di riempimento medio: per ogni combinazione classId+date, confermati/capienza
+    const occurrenceMap: Record<string, { classId: string; confermati: number }> = {};
+    activeBookings.filter(b => b.status === 'confermata').forEach(b => {
+      const key = `${b.classId}_${b.date}`;
+      if (!occurrenceMap[key]) occurrenceMap[key] = { classId: b.classId, confermati: 0 };
+      occurrenceMap[key].confermati++;
+    });
+    const fillRates = Object.values(occurrenceMap).map(occ => {
+      const cls = gymClasses.find(c => c.id === occ.classId);
+      return cls && cls.capacity > 0 ? occ.confermati / cls.capacity : 0;
+    });
+    const tassoRiempimentoMedio = fillRates.length > 0 ? Math.round((fillRates.reduce((s, r) => s + r, 0) / fillRates.length) * 100) : 0;
+
+    // Check-in per settimana (ultime 8 settimane) + ora di picco
+    const weekObj: Record<string, number> = {};
+    const hourCounts: Record<number, number> = {};
+    checkIns.forEach(ci => {
+      const d = new Date(ci.dateTime);
+      const hour = d.getHours();
+      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+      const key = weekStart.toISOString().split('T')[0];
+      weekObj[key] = (weekObj[key] || 0) + 1;
+    });
+    const checkInsPerSettimana = Object.entries(weekObj)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-8)
+      .map(([week, count]) => ({ period: new Date(week + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }), presenze: count }));
+
+    let oraPunta: number | null = null;
+    let maxCount = 0;
+    Object.entries(hourCounts).forEach(([h, count]) => { if (count > maxCount) { maxCount = count; oraPunta = parseInt(h); } });
+
+    return { popolarita, tassoRiempimentoMedio, checkInsPerSettimana, oraPunta };
+  }, [gymClasses, classBookings, checkIns]);
+
+  // ─── Personale ────────────────────────────────────────────
+  const staffMetrics = useMemo(() => {
+    const attivi = staff.filter(s => s.active).length;
+    const oreCorsiPerIstruttore = staff.map(s => {
+      const classiAssegnate = gymClasses.filter(c => c.staffId === s.id);
+      const oreSettimanali = classiAssegnate.reduce((sum, c) => sum + (c.schedule.length * c.durationMinutes) / 60, 0);
+      return { name: s.name, ore: Math.round(oreSettimanali * 10) / 10 };
+    }).filter(s => s.ore > 0).sort((a, b) => b.ore - a.ore);
+    return { attivi, oreCorsiPerIstruttore };
+  }, [staff, gymClasses]);
+
+  // ─── Attrezzature ───────────────────────────────────────────
+  const equipmentMetrics = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
+    const inManutenzioneOGuasto = equipment.filter(e => e.status === 'manutenzione' || e.status === 'guasto').length;
+    const manutenzioniInScadenza = equipment.filter(e => e.nextMaintenanceDate && new Date(e.nextMaintenanceDate + 'T00:00:00') <= in30 && e.status !== 'dismesso').length;
+    return { inManutenzioneOGuasto, manutenzioniInScadenza, totale: equipment.length };
+  }, [equipment]);
+
+  // ─── Lead ─────────────────────────────────────────────────
+  const leadMetrics = useMemo(() => {
+    const byStatus: Record<string, number> = {};
+    leads.forEach(l => { byStatus[l.status] = (byStatus[l.status] || 0) + 1; });
+    const convertiti = leads.filter(l => l.status === 'convertito').length;
+    const tassoConversione = leads.length > 0 ? Math.round((convertiti / leads.length) * 100) : 0;
+    return { byStatus, tassoConversione, totale: leads.length };
+  }, [leads]);
 
   return (
     <div className="space-y-6">
@@ -348,6 +505,251 @@ export const Reports: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ─── Finanza ─── */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-neutral-900 pt-2">Finanza</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-neutral-200 flex items-center gap-4">
+            <div className="w-11 h-11 bg-red-100 rounded-xl flex items-center justify-center text-red-600 flex-shrink-0"><TrendingDown className="w-5 h-5" /></div>
+            <div>
+              <p className="text-neutral-500 text-xs font-medium">Spese Totali</p>
+              <h3 className="text-2xl font-bold text-red-700">€{financeData.totalSpese.toFixed(0)}</h3>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-neutral-200 flex items-center gap-4">
+            <div className="w-11 h-11 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 flex-shrink-0"><Store className="w-5 h-5" /></div>
+            <div>
+              <p className="text-neutral-500 text-xs font-medium">Ricavi Prodotti</p>
+              <h3 className="text-2xl font-bold text-purple-700">€{financeData.totalRicaviProdotti.toFixed(0)}</h3>
+              <p className="text-[11px] text-neutral-400">{products.length} a catalogo</p>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-neutral-200 flex items-center gap-4">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${financeData.utileNetto >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}><Wallet className="w-5 h-5" /></div>
+            <div>
+              <p className="text-neutral-500 text-xs font-medium">Utile Netto</p>
+              <h3 className={`text-2xl font-bold ${financeData.utileNetto >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>€{financeData.utileNetto.toFixed(0)}</h3>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-neutral-200">
+            <p className="text-neutral-500 text-xs font-medium mb-2">Spese per Categoria</p>
+            {Object.keys(financeData.byCategory).length === 0 ? (
+              <p className="text-sm text-neutral-400 italic">Nessuna spesa</p>
+            ) : (
+              <div className="space-y-1 max-h-16 overflow-y-auto">
+                {Object.entries(financeData.byCategory).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([cat, amt]) => (
+                  <div key={cat} className="flex justify-between text-xs">
+                    <span className="text-neutral-600">{cat}</span>
+                    <span className="font-semibold text-neutral-900">€{amt.toFixed(0)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        {financeData.monthlyChart.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6">
+            <h3 className="text-sm font-semibold text-neutral-600 mb-4">Entrate vs Uscite per Mese</h3>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={financeData.monthlyChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                  <XAxis dataKey="period" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} tickFormatter={(v) => `€${v}`} />
+                  <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: any) => `€${Number(value).toFixed(2)}`} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="entrate" name="Entrate" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="uscite" name="Uscite" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ─── Clienti & Abbonamenti ─── */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-neutral-900 pt-2">Clienti & Abbonamenti</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-neutral-200">
+            <p className="text-neutral-500 text-xs font-medium mb-1">Nuovi (mese)</p>
+            <h3 className="text-xl font-bold text-neutral-900">{clientMetrics.nuoviQuestoMese}</h3>
+          </div>
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-neutral-200">
+            <p className="text-neutral-500 text-xs font-medium mb-1">Attivi / Scaduti</p>
+            <h3 className="text-xl font-bold text-neutral-900">{clientMetrics.attivi} / {clientMetrics.scaduti}</h3>
+          </div>
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-neutral-200">
+            <p className="text-neutral-500 text-xs font-medium mb-1">Tasso di Rinnovo</p>
+            <h3 className="text-xl font-bold text-neutral-900">{clientMetrics.tassoRinnovo}%</h3>
+          </div>
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-neutral-200">
+            <p className="text-neutral-500 text-xs font-medium mb-1">In scadenza 7 / 30gg</p>
+            <h3 className="text-xl font-bold text-neutral-900">{subscriptionExpiry.inScadenza7.length} / {subscriptionExpiry.inScadenza30.length}</h3>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Cake className="w-4 h-4 text-pink-500" />
+              <p className="text-neutral-700 text-sm font-semibold">Compleanni del Mese</p>
+            </div>
+            {clientMetrics.compleanniMese.length === 0 ? (
+              <p className="text-sm text-neutral-400 italic">Nessun compleanno questo mese</p>
+            ) : (
+              <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                {clientMetrics.compleanniMese.map(c => (
+                  <div key={c.id} className="flex justify-between text-sm">
+                    <span className="text-neutral-700">{c.name}</span>
+                    <span className="text-neutral-500">{new Date(c.birthDate! + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'long' })}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <FileWarning className="w-4 h-4 text-amber-500" />
+              <p className="text-neutral-700 text-sm font-semibold">Certificati Medici in Scadenza (30gg)</p>
+            </div>
+            {clientMetrics.certificatiInScadenza.length === 0 ? (
+              <p className="text-sm text-neutral-400 italic">Nessun certificato in scadenza</p>
+            ) : (
+              <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                {clientMetrics.certificatiInScadenza.map(c => (
+                  <div key={c.id} className="flex justify-between text-sm">
+                    <span className="text-neutral-700">{c.name}</span>
+                    <span className="text-amber-600 font-medium">{new Date(c.medicalCertificateExpiry! + 'T00:00:00').toLocaleDateString('it-IT')}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Corsi & Presenze ─── */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-neutral-900 pt-2">Corsi & Presenze</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-neutral-200">
+            <p className="text-neutral-500 text-xs font-medium mb-1">Riempimento Medio Corsi</p>
+            <h3 className="text-xl font-bold text-neutral-900">{classMetrics.tassoRiempimentoMedio}%</h3>
+          </div>
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-neutral-200">
+            <p className="text-neutral-500 text-xs font-medium mb-1">Ora di Picco Accessi</p>
+            <h3 className="text-xl font-bold text-neutral-900 flex items-center gap-1.5">
+              {classMetrics.oraPunta !== null ? <><Flame className="w-4 h-4 text-orange-500" />{String(classMetrics.oraPunta).padStart(2, '0')}:00</> : '—'}
+            </h3>
+          </div>
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-neutral-200">
+            <p className="text-neutral-500 text-xs font-medium mb-1">Check-in Totali</p>
+            <h3 className="text-xl font-bold text-neutral-900">{checkIns.length}</h3>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6">
+            <h3 className="text-sm font-semibold text-neutral-600 mb-4 flex items-center gap-2"><CalendarDays className="w-4 h-4 text-neutral-400" /> Corsi Più Popolari</h3>
+            {classMetrics.popolarita.length === 0 ? (
+              <p className="text-sm text-neutral-400 italic py-8 text-center">Nessun corso configurato</p>
+            ) : (
+              <div className="h-56 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={classMetrics.popolarita} layout="vertical" margin={{ top: 0, right: 20, left: 10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
+                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} allowDecimals={false} />
+                    <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} width={90} />
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                    <Bar dataKey="prenotazioni" name="Prenotazioni" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={18} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6">
+            <h3 className="text-sm font-semibold text-neutral-600 mb-4">Check-in per Settimana</h3>
+            {classMetrics.checkInsPerSettimana.length === 0 ? (
+              <p className="text-sm text-neutral-400 italic py-8 text-center">Nessun accesso registrato</p>
+            ) : (
+              <div className="h-56 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={classMetrics.checkInsPerSettimana} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorPresenze" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis dataKey="period" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} allowDecimals={false} />
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                    <Area type="monotone" dataKey="presenze" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorPresenze)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Personale, Attrezzature & Lead ─── */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-neutral-900 pt-2">Personale, Attrezzature & Lead</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <UserCog className="w-4 h-4 text-purple-500" />
+              <p className="text-neutral-700 text-sm font-semibold">Personale ({staffMetrics.attivi} attivi)</p>
+            </div>
+            {staffMetrics.oreCorsiPerIstruttore.length === 0 ? (
+              <p className="text-sm text-neutral-400 italic">Nessuna ora corso assegnata</p>
+            ) : (
+              <div className="space-y-1.5 max-h-28 overflow-y-auto">
+                {staffMetrics.oreCorsiPerIstruttore.map(s => (
+                  <div key={s.name} className="flex justify-between text-sm">
+                    <span className="text-neutral-700">{s.name}</span>
+                    <span className="font-semibold text-neutral-900">{s.ore}h/sett</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Wrench className="w-4 h-4 text-amber-500" />
+              <p className="text-neutral-700 text-sm font-semibold">Attrezzature ({equipmentMetrics.totale})</p>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-neutral-600">In manutenzione/guasto</span><span className="font-semibold text-red-600">{equipmentMetrics.inManutenzioneOGuasto}</span></div>
+              <div className="flex justify-between"><span className="text-neutral-600">Manutenzioni in scadenza (30gg)</span><span className="font-semibold text-amber-600">{equipmentMetrics.manutenzioniInScadenza}</span></div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Target className="w-4 h-4 text-blue-500" />
+              <p className="text-neutral-700 text-sm font-semibold">Lead ({leadMetrics.totale}) · Conversione {leadMetrics.tassoConversione}%</p>
+            </div>
+            {Object.keys(leadMetrics.byStatus).length === 0 ? (
+              <p className="text-sm text-neutral-400 italic">Nessun lead registrato</p>
+            ) : (
+              <div className="space-y-1.5">
+                {Object.entries(leadMetrics.byStatus).map(([status, count]) => (
+                  <div key={status} className="flex justify-between text-sm">
+                    <span className="text-neutral-700 capitalize">{status.replace('_', ' ')}</span>
+                    <span className="font-semibold text-neutral-900">{count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
