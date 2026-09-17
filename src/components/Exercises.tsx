@@ -85,7 +85,7 @@ export const Exercises: React.FC = () => {
         </div>
         <button
           onClick={() => openModal()}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="bg-brand-950 text-white px-4 py-2 rounded-lg font-medium hover:bg-brand-800 transition-colors flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           Aggiungi Esercizio
@@ -101,7 +101,7 @@ export const Exercises: React.FC = () => {
               placeholder="Cerca esercizio o gruppo muscolare..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
             />
           </div>
         </div>
@@ -122,7 +122,7 @@ export const Exercises: React.FC = () => {
                   <tr key={exercise.id} className="hover:bg-neutral-50 transition-colors">
                     <td className="p-4 font-medium text-neutral-900">{exercise.name}</td>
                     <td className="p-4 text-neutral-600">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800">
                         {exercise.muscleGroup}
                       </span>
                     </td>
@@ -133,7 +133,7 @@ export const Exercises: React.FC = () => {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => openModal(exercise)}
-                          className="p-2 text-neutral-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
+                          className="p-2 text-neutral-400 hover:text-brand-600 transition-colors rounded-lg hover:bg-brand-50"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -183,7 +183,7 @@ export const Exercises: React.FC = () => {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                   placeholder="es. Panca Piana"
                 />
               </div>
@@ -195,7 +195,7 @@ export const Exercises: React.FC = () => {
                   required
                   value={formData.muscleGroup}
                   onChange={(e) => setFormData({ ...formData, muscleGroup: e.target.value })}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none bg-white"
                 >
                   {MUSCLE_GROUPS.map(group => (
                     <option key={group} value={group}>
@@ -251,7 +251,7 @@ export const Exercises: React.FC = () => {
                            }
                         }
                       }}
-                      className="text-sm text-neutral-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      className="text-sm text-neutral-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
                     />
                   </div>
                   {formData.videoUrl?.startsWith('localforage:') && (
@@ -283,7 +283,7 @@ export const Exercises: React.FC = () => {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none h-24"
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none resize-none h-24"
                   placeholder="Note sull'esecuzione..."
                 />
               </div>
@@ -298,7 +298,7 @@ export const Exercises: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isUploading}
-                  className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-brand-950 text-white font-medium hover:bg-brand-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUploading ? 'Caricamento...' : 'Salva'}
                 </button>

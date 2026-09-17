@@ -100,7 +100,7 @@ export const Settings: React.FC = () => {
       {/* Profilo palestra */}
       <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6">
         <div className="flex items-center gap-2 mb-5">
-          <Building2 className="w-5 h-5 text-blue-600" />
+          <Building2 className="w-5 h-5 text-brand-600" />
           <h2 className="text-lg font-bold text-neutral-900">Profilo Palestra</h2>
         </div>
         <form onSubmit={handleSaveProfile} className="space-y-5">
@@ -108,17 +108,17 @@ export const Settings: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Nome Palestra</label>
               <input type="text" required value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" />
             </div>
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Indirizzo</label>
               <input type="text" value={profile.address || ''} onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Via Roma 1, Milano" />
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Via Roma 1, Milano" />
             </div>
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Telefono</label>
               <input type="tel" value={profile.phone || ''} onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="02 1234567" />
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="02 1234567" />
             </div>
           </div>
 
@@ -132,16 +132,16 @@ export const Settings: React.FC = () => {
                   <div key={day} className="flex items-center gap-3 p-2.5 bg-neutral-50 rounded-lg border border-neutral-200">
                     <label className="flex items-center gap-2 w-32 flex-shrink-0 cursor-pointer">
                       <input type="checkbox" checked={isOpen} onChange={() => toggleDayOpen(day)}
-                        className="w-4 h-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500" />
+                        className="w-4 h-4 rounded border-neutral-300 text-brand-600 focus:ring-brand-500" />
                       <span className="text-sm font-medium text-neutral-700">{dayName}</span>
                     </label>
                     {isOpen ? (
                       <div className="flex items-center gap-2 flex-1">
                         <input type="time" value={hour!.open} onChange={(e) => updateHour(day, 'open', e.target.value)}
-                          className="px-2 py-1 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                          className="px-2 py-1 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
                         <span className="text-neutral-400 text-sm">—</span>
                         <input type="time" value={hour!.close} onChange={(e) => updateHour(day, 'close', e.target.value)}
-                          className="px-2 py-1 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                          className="px-2 py-1 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
                       </div>
                     ) : (
                       <span className="text-sm text-neutral-400 italic">Chiuso</span>
@@ -153,7 +153,7 @@ export const Settings: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <button type="submit" className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2">
+            <button type="submit" className="px-4 py-2 bg-brand-950 text-white font-medium hover:bg-brand-800 rounded-lg transition-colors flex items-center gap-2">
               <Save className="w-4 h-4" /> Salva Profilo
             </button>
             {savedFlash && <span className="text-sm text-green-600 font-medium">Salvato ✓</span>}
@@ -165,10 +165,10 @@ export const Settings: React.FC = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
         <div className="p-4 border-b border-neutral-200 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <DoorOpen className="w-5 h-5 text-blue-600" />
+            <DoorOpen className="w-5 h-5 text-brand-600" />
             <h2 className="text-lg font-bold text-neutral-900">Sale</h2>
           </div>
-          <button onClick={() => openRoomModal()} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-1.5">
+          <button onClick={() => openRoomModal()} className="bg-brand-950 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-brand-800 transition-colors flex items-center gap-1.5">
             <Plus className="w-4 h-4" /> Aggiungi Sala
           </button>
         </div>
@@ -190,7 +190,7 @@ export const Settings: React.FC = () => {
                   <td className="p-4 text-neutral-600">{r.capacity ?? '—'}</td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => openRoomModal(r)} className="p-2 text-neutral-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => openRoomModal(r)} className="p-2 text-neutral-400 hover:text-brand-600 transition-colors rounded-lg hover:bg-brand-50"><Edit2 className="w-4 h-4" /></button>
                       <button onClick={() => { if (window.confirm('Eliminare questa sala?')) deleteRoom(r.id); }} className="p-2 text-neutral-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </td>
@@ -206,14 +206,14 @@ export const Settings: React.FC = () => {
       {/* Backup dati */}
       <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6">
         <div className="flex items-center gap-2 mb-2">
-          <DatabaseBackup className="w-5 h-5 text-blue-600" />
+          <DatabaseBackup className="w-5 h-5 text-brand-600" />
           <h2 className="text-lg font-bold text-neutral-900">Dati</h2>
         </div>
         <p className="text-sm text-neutral-500 mb-4">
           Tutti i dati sono salvati solo su questo browser. Esporta un backup periodicamente per non rischiare di perderli.
         </p>
         <div className="flex flex-wrap gap-3">
-          <button onClick={() => exportBackup()} className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2">
+          <button onClick={() => exportBackup()} className="px-4 py-2 bg-brand-950 text-white font-medium hover:bg-brand-800 rounded-lg transition-colors flex items-center gap-2">
             <Download className="w-4 h-4" /> Esporta Backup
           </button>
           <button onClick={() => importInputRef.current?.click()} className="px-4 py-2 border border-neutral-300 text-neutral-700 font-medium hover:bg-neutral-50 rounded-lg transition-colors flex items-center gap-2">
@@ -237,25 +237,25 @@ export const Settings: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Nome Sala</label>
                 <input type="text" required autoFocus value={roomForm.name} onChange={(e) => setRoomForm({ ...roomForm, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="es. Sala Corsi 1" />
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="es. Sala Corsi 1" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Tipo</label>
                   <select value={roomForm.type} onChange={(e) => setRoomForm({ ...roomForm, type: e.target.value as Room['type'] })}
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none bg-white">
                     {ROOM_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Capienza</label>
                   <input type="number" min="0" value={roomForm.capacity} onChange={(e) => { if (e.target.value.includes('-')) return; setRoomForm({ ...roomForm, capacity: e.target.value }); }}
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="es. 20" />
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="es. 20" />
                 </div>
               </div>
               <div className="pt-2 flex gap-3 justify-end">
                 <button type="button" onClick={closeRoomModal} className="px-4 py-2 text-neutral-600 font-medium hover:bg-neutral-100 rounded-lg transition-colors">Annulla</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors">Salva</button>
+                <button type="submit" className="px-4 py-2 bg-brand-950 text-white font-medium hover:bg-brand-800 rounded-lg transition-colors">Salva</button>
               </div>
             </form>
           </div>

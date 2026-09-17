@@ -6,31 +6,6 @@ export interface Exercise {
   videoUrl?: string;
 }
 
-export interface Subscription {
-  id: string;
-  name: string;
-  durationMonths: number;
-  durationDays?: number;
-  cost: number;
-  defaultInstallments?: number; // numero di rate predefinito
-}
-
-export type PaymentMethod = 'contanti' | 'carta' | 'bonifico' | 'pos' | 'altro';
-
-export interface PaymentInstallment {
-  id: string;
-  dueDate: string; // YYYY-MM-DD
-  amount: number;
-  paid: boolean;
-  method?: PaymentMethod;
-}
-
-export interface ClientPayment {
-  totalCost: number;
-  amountPaid: number;
-  installments: PaymentInstallment[];
-}
-
 export interface ExerciseLog {
   id: string;
   week: number;
@@ -77,18 +52,13 @@ export interface Client {
   id: string;
   name: string;
   email: string;
-  phone?: string; // <--- AGGIUNGI QUESTA RIGA
+  phone?: string;
   password?: string;
   isRegistered?: boolean;
   workoutPlan: WorkoutDay[];
   pastPlans?: PastWorkoutPlan[];
   measurements?: BodyMeasurement[];
-  subscriptionId?: string;
-  subscriptionStart?: string;
-  subscriptionEnd?: string;
-  payment?: ClientPayment;
   birthDate?: string; // YYYY-MM-DD
-  medicalCertificateExpiry?: string; // YYYY-MM-DD
   nutritionPlan?: NutritionPlan;
 }
 
@@ -113,16 +83,6 @@ export interface NutritionPlan {
 }
 
 // ─── Personale ────────────────────────────────────────────────
-export interface StaffPermissions {
-  clients?: boolean;
-  classes?: boolean;
-  gymAccess?: boolean;
-  equipment?: boolean;
-  leads?: boolean;
-  shop?: boolean;
-  finance?: boolean;
-}
-
 export interface StaffMember {
   id: string;
   name: string;
@@ -133,9 +93,6 @@ export interface StaffMember {
   hourlyRate?: number;
   hireDate?: string; // YYYY-MM-DD
   notes?: string;
-  accountEnabled?: boolean;
-  password?: string;
-  permissions?: StaffPermissions;
 }
 
 // ─── Sale ─────────────────────────────────────────────────────
@@ -176,54 +133,6 @@ export interface ClassBooking {
   createdAt: string; // ISO
 }
 
-// ─── Sala Pesi / Accessi ──────────────────────────────────────
-export interface CheckIn {
-  id: string;
-  clientId: string;
-  dateTime: string; // ISO
-  type: 'sala_pesi' | 'corso';
-  classBookingId?: string;
-}
-
-// ─── Attrezzature ─────────────────────────────────────────────
-export type EquipmentStatus = 'operativo' | 'manutenzione' | 'guasto' | 'dismesso';
-
-export interface Equipment {
-  id: string;
-  name: string;
-  category: string;
-  status: EquipmentStatus;
-  purchaseDate?: string;
-  lastMaintenanceDate?: string;
-  nextMaintenanceDate?: string;
-  notes?: string;
-}
-
-// ─── Spese ────────────────────────────────────────────────────
-export interface Expense {
-  id: string;
-  date: string; // YYYY-MM-DD
-  category: string;
-  description: string;
-  amount: number;
-  recurring?: boolean;
-}
-
-// ─── Lead / Prospect ──────────────────────────────────────────
-export type LeadStatus = 'nuovo' | 'contattato' | 'prova_fissata' | 'convertito' | 'perso';
-
-export interface Lead {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  source: string;
-  status: LeadStatus;
-  createdAt: string; // ISO
-  trialDate?: string;
-  notes?: string;
-}
-
 // ─── Impostazioni palestra ────────────────────────────────────
 export interface OpeningHour {
   day: number; // 0-6
@@ -245,25 +154,4 @@ export interface Announcement {
   message: string;
   createdAt: string; // ISO
   pinned?: boolean;
-}
-
-// ─── Negozio: Prodotti & Vendite ────────────────────────────────
-export interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  cost?: number;
-  stock: number;
-  active: boolean;
-}
-
-export interface Sale {
-  id: string;
-  date: string; // ISO
-  productId: string;
-  clientId?: string;
-  quantity: number;
-  unitPrice: number;
-  total: number;
 }

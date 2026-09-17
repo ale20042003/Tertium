@@ -68,7 +68,7 @@ export const ExerciseAnimation: React.FC<{ muscleGroup: string; videoUrl?: strin
 
   if (error) {
     return (
-      <div className="w-full h-full bg-neutral-900 flex flex-col items-center justify-center text-red-500 p-4 text-center">
+      <div className="w-full h-full bg-neutral-100 flex flex-col items-center justify-center text-red-500 p-4 text-center">
         <PlaySquare className="w-12 h-12 mb-2 opacity-50" />
         <span className="text-sm font-medium">{error}</span>
       </div>
@@ -96,7 +96,7 @@ export const ExerciseAnimation: React.FC<{ muscleGroup: string; videoUrl?: strin
               className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors z-10"
               aria-label="Play video"
             >
-              <div className="bg-lime-400 text-neutral-900 rounded-full p-4 shadow-lg transform transition-transform hover:scale-110">
+              <div className="bg-brand-950 text-white rounded-full p-4 shadow-lg transform transition-transform hover:scale-110">
                 <Play className="w-8 h-8 ml-1" fill="currentColor" />
               </div>
             </button>
@@ -115,7 +115,7 @@ export const ExerciseAnimation: React.FC<{ muscleGroup: string; videoUrl?: strin
   }
 
   return (
-    <div className="w-full h-full bg-neutral-900 flex flex-col items-center justify-center text-neutral-500">
+    <div className="w-full h-full bg-neutral-100 flex flex-col items-center justify-center text-neutral-400">
       <PlaySquare className="w-12 h-12 mb-2 opacity-50" />
       <span className="text-sm font-medium">Nessun video disponibile</span>
     </div>

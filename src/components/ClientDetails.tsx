@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Plus, Trash2, Dumbbell, Clock, Repeat, X, CreditCard, CheckCircle2, AlertCircle, Clock3, Search, ChevronDown, Check, Apple, Edit2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Dumbbell, Clock, Repeat, X, Search, ChevronDown, Check, Apple, Edit2 } from 'lucide-react';
 import { useAppContext } from '../store';
 import { Client, WorkoutDay, NutritionMeal } from '../types';
 
@@ -35,7 +35,7 @@ const SearchableExerciseSelect = ({ exercises, value, onChange }: { exercises: a
       {/* Finta "Select" visibile */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-2 bg-white border border-neutral-300 rounded-lg cursor-pointer flex justify-between items-center hover:bg-neutral-50 transition-colors focus:ring-2 focus:ring-blue-500"
+        className="w-full px-4 py-2 bg-white border border-neutral-300 rounded-lg cursor-pointer flex justify-between items-center hover:bg-neutral-50 transition-colors focus:ring-2 focus:ring-brand-500"
       >
         <span className={`text-sm ${selectedExercise ? "text-neutral-900 font-medium" : "text-neutral-500"}`}>
           {selectedExercise ? `${selectedExercise.name} (${selectedExercise.muscleGroup})` : 'Seleziona esercizio...'}
@@ -55,7 +55,7 @@ const SearchableExerciseSelect = ({ exercises, value, onChange }: { exercises: a
                 placeholder="Cerca esercizio..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-white border border-neutral-300 rounded-md text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full pl-9 pr-3 py-2 bg-white border border-neutral-300 rounded-md text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
               />
             </div>
           </div>
@@ -70,15 +70,15 @@ const SearchableExerciseSelect = ({ exercises, value, onChange }: { exercises: a
                     setIsOpen(false);
                     setSearchTerm(''); 
                   }}
-                  className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 flex justify-between items-center transition-colors ${
-                    value === ex.id ? 'bg-blue-50 text-blue-700' : 'text-neutral-700'
+                  className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-brand-50 flex justify-between items-center transition-colors ${
+                    value === ex.id ? 'bg-brand-50 text-brand-700' : 'text-neutral-700'
                   }`}
                 >
                   <div>
                     <span className="font-medium">{ex.name}</span>
                     <span className="text-neutral-400 text-xs ml-2">({ex.muscleGroup})</span>
                   </div>
-                  {value === ex.id && <Check className="w-4 h-4 text-blue-600" />}
+                  {value === ex.id && <Check className="w-4 h-4 text-brand-600" />}
                 </div>
               ))
             ) : (
@@ -97,7 +97,7 @@ const SearchableExerciseSelect = ({ exercises, value, onChange }: { exercises: a
 const emptyNutritionForm = { title: '', dailyCalories: '', dailyProtein: '', dailyCarbs: '', dailyFat: '', notes: '', meals: [] as NutritionMeal[] };
 
 export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) => {
-  const { exercises, subscriptions, addWorkoutDay, deleteWorkoutDay, addWorkoutExercise, deleteWorkoutExercise, archiveWorkoutPlan, updateNutritionPlan } = useAppContext();
+  const { exercises, addWorkoutDay, deleteWorkoutDay, addWorkoutExercise, deleteWorkoutExercise, archiveWorkoutPlan, updateNutritionPlan } = useAppContext();
 
   const [isNutritionModalOpen, setIsNutritionModalOpen] = useState(false);
   const [nutritionForm, setNutritionForm] = useState(emptyNutritionForm);
@@ -236,139 +236,6 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
         </div>
       </div>
 
-      {/* ─── Riepilogo Pagamenti ─── */}
-      {client.payment && (() => {
-        const pay = client.payment!;
-        const sub = subscriptions.find(s => s.id === client.subscriptionId);
-        const pct = pay.totalCost > 0 ? Math.min(100, (pay.amountPaid / pay.totalCost) * 100) : 0;
-        const moneyLeft = pay.totalCost - pay.amountPaid;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const pending = pay.installments.filter(i => !i.paid);
-        const paid = pay.installments.filter(i => i.paid);
-        const nextInst = pending
-          .filter(i => i.dueDate)
-          .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
-        const nextDue = nextInst ? new Date(nextInst.dueDate + 'T00:00:00') : null;
-        const nextIsLate = nextDue && nextDue < today;
-
-        const getStatus = (inst: { dueDate: string; paid: boolean }) => {
-          if (inst.paid) return { label: 'Saldata', color: 'text-green-700 bg-green-100', icon: <CheckCircle2 className="w-3.5 h-3.5" /> };
-          if (!inst.dueDate) return { label: 'In attesa', color: 'text-neutral-600 bg-neutral-100', icon: <Clock3 className="w-3.5 h-3.5" /> };
-          const due = new Date(inst.dueDate + 'T00:00:00');
-          if (due < today) return { label: 'Scaduta', color: 'text-red-700 bg-red-100', icon: <AlertCircle className="w-3.5 h-3.5" /> };
-          const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
-          if (diff <= 7) return { label: `Scade in ${diff}g`, color: 'text-amber-700 bg-amber-100', icon: <AlertCircle className="w-3.5 h-3.5" /> };
-          return { label: 'In scadenza', color: 'text-blue-700 bg-blue-100', icon: <Clock3 className="w-3.5 h-3.5" /> };
-        };
-
-        return (
-          <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
-            {/* Header */}
-            <div className="p-4 border-b border-neutral-200 flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-emerald-600" />
-              <h2 className="text-lg font-semibold text-neutral-900">Pagamenti</h2>
-              {sub && <span className="ml-auto text-sm text-neutral-500 font-medium">{sub.name}</span>}
-            </div>
-
-            <div className="p-5 space-y-5">
-              {/* KPI cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-neutral-50 rounded-xl p-3 text-center border border-neutral-200">
-                  <div className="text-xl font-bold text-neutral-800">{pay.installments.length}</div>
-                  <div className="text-xs text-neutral-500 mt-0.5">Rate totali</div>
-                </div>
-                <div className="bg-green-50 rounded-xl p-3 text-center border border-green-200">
-                  <div className="text-xl font-bold text-green-700">{paid.length}</div>
-                  <div className="text-xs text-green-600 mt-0.5">Saldate</div>
-                </div>
-                <div className={`rounded-xl p-3 text-center border ${pending.length === 0 ? 'bg-green-50 border-green-200' : nextIsLate ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
-                  <div className={`text-xl font-bold ${pending.length === 0 ? 'text-green-700' : nextIsLate ? 'text-red-700' : 'text-amber-700'}`}>{pending.length}</div>
-                  <div className={`text-xs mt-0.5 ${pending.length === 0 ? 'text-green-600' : nextIsLate ? 'text-red-600' : 'text-amber-600'}`}>Rimanenti</div>
-                </div>
-                <div className={`rounded-xl p-3 text-center border ${nextDue ? (nextIsLate ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200') : 'bg-neutral-50 border-neutral-200'}`}>
-                  <div className={`text-sm font-bold leading-tight ${nextDue ? (nextIsLate ? 'text-red-700' : 'text-blue-700') : 'text-neutral-400'}`}>
-                    {nextDue
-                      ? nextDue.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: '2-digit' })
-                      : pending.length === 0 ? '✓' : '—'}
-                  </div>
-                  <div className={`text-xs mt-0.5 ${nextIsLate ? 'text-red-600' : 'text-neutral-500'}`}>
-                    {nextIsLate ? '⚠ Scaduta' : 'Pross. scad.'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Progress bar */}
-              <div>
-                <div className="flex justify-between items-end mb-1.5">
-                  <span className="text-sm text-neutral-600">Importo pagato</span>
-                  <span className="text-sm font-bold text-neutral-800">€{pay.amountPaid.toFixed(2)} / €{pay.totalCost.toFixed(2)}</span>
-                </div>
-                <div className="h-2.5 w-full bg-neutral-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${pct}%`, background: pct >= 100 ? '#22c55e' : pct >= 50 ? '#3b82f6' : '#f59e0b' }}
-                  />
-                </div>
-                <div className="flex justify-between mt-1">
-                  <span className="text-xs text-neutral-400">{pct.toFixed(0)}% saldato</span>
-                  <span className={`text-xs font-semibold ${moneyLeft <= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                    {moneyLeft <= 0 ? 'Completamente saldato' : `Rimanente: €${moneyLeft.toFixed(2)}`}
-                  </span>
-                </div>
-              </div>
-
-              {/* Installments table */}
-              {pay.installments.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-neutral-700 mb-2">Dettaglio rate</h3>
-                  <div className="rounded-xl border border-neutral-200 overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-neutral-50 text-neutral-500 text-xs uppercase tracking-wider">
-                          <th className="px-4 py-2.5 text-left font-medium">#</th>
-                          <th className="px-4 py-2.5 text-left font-medium">Scadenza</th>
-                          <th className="px-4 py-2.5 text-right font-medium">Importo</th>
-                          <th className="px-4 py-2.5 text-right font-medium">Stato</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-neutral-100">
-                        {pay.installments.map((inst, idx) => {
-                          const status = getStatus(inst);
-                          const isNext = nextInst?.id === inst.id;
-                          return (
-                            <tr key={inst.id} className={`${isNext ? 'bg-amber-50/50' : 'hover:bg-neutral-50'}`}>
-                              <td className="px-4 py-3 text-neutral-400 font-medium">
-                                <div className="flex items-center gap-1.5">
-                                  {idx + 1}
-                                  {isNext && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-neutral-700 font-medium">
-                                {inst.dueDate
-                                  ? new Date(inst.dueDate + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })
-                                  : '—'}
-                              </td>
-                              <td className="px-4 py-3 text-right font-semibold text-neutral-800">€{inst.amount.toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right">
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
-                                  {status.icon} {status.label}
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
-
       {/* ─── Piano Alimentare ─── */}
       <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
         <div className="p-4 border-b border-neutral-200 flex items-center gap-2">
@@ -376,7 +243,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
           <h2 className="text-lg font-semibold text-neutral-900">Piano Alimentare</h2>
           <button
             onClick={openNutritionModal}
-            className="ml-auto text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+            className="ml-auto text-sm text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1"
           >
             {client.nutritionPlan ? <><Edit2 className="w-3.5 h-3.5" /> Modifica</> : <><Plus className="w-3.5 h-3.5" /> Crea Piano</>}
           </button>
@@ -393,7 +260,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                     <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-700">{client.nutritionPlan.dailyCalories} kcal</span>
                   )}
                   {client.nutritionPlan.dailyProtein !== undefined && (
-                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-700">P {client.nutritionPlan.dailyProtein}g</span>
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-brand-50 text-brand-700">P {client.nutritionPlan.dailyProtein}g</span>
                   )}
                   {client.nutritionPlan.dailyCarbs !== undefined && (
                     <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700">C {client.nutritionPlan.dailyCarbs}g</span>
@@ -437,7 +304,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
           )}
           <button
             onClick={() => setIsDayModalOpen(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm"
+            className="bg-brand-950 text-white px-4 py-2 rounded-lg font-medium hover:bg-brand-800 transition-colors flex items-center gap-2 text-sm"
           >
             <Plus className="w-4 h-4" />
             Aggiungi Giorno
@@ -460,7 +327,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                 <div className="flex gap-2">
                   <button
                     onClick={() => openExerciseModal(day.id)}
-                    className="text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
+                    className="text-brand-600 hover:bg-brand-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
                   >
                     <Plus className="w-4 h-4" /> Esercizio
                   </button>
@@ -493,7 +360,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-bold text-neutral-900">{exerciseInfo.name}</span>
-                              <span className="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                              <span className="text-xs font-medium bg-brand-100 text-brand-800 px-2 py-0.5 rounded-full">
                                 {exerciseInfo.muscleGroup}
                               </span>
                             </div>
@@ -573,7 +440,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                                 </div>
                                 <div className="text-right flex flex-col items-end gap-1">
                                   {workoutEx.logs && workoutEx.logs.length > 0 ? (
-                                    <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                    <span className="text-xs font-semibold text-brand-600 bg-brand-50 px-2 py-1 rounded">
                                       {workoutEx.logs.length} progressi salvati
                                     </span>
                                   ) : (
@@ -615,13 +482,13 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                   autoFocus
                   value={newDayName}
                   onChange={(e) => setNewDayName(e.target.value)}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                   placeholder="es. Giorno 1 - Petto/Tricipiti"
                 />
               </div>
               <div className="pt-2 flex gap-3 justify-end">
                 <button type="button" onClick={() => { setIsDayModalOpen(false); setNewDayName(''); }} className="px-4 py-2 text-neutral-600 font-medium hover:bg-neutral-100 rounded-lg transition-colors">Annulla</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors">Aggiungi</button>
+                <button type="submit" className="px-4 py-2 bg-brand-950 text-white font-medium hover:bg-brand-800 rounded-lg transition-colors">Aggiungi</button>
               </div>
             </form>
           </div>
@@ -648,7 +515,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                   autoFocus
                   value={archivePlanName}
                   onChange={(e) => setArchivePlanName(e.target.value)}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                   placeholder="es. Scheda Aprile 2026"
                 />
               </div>
@@ -678,7 +545,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                   <button
                     type="button"
                     onClick={() => setIsExerciseModalOpen(false)}
-                    className="text-blue-600 font-medium hover:underline"
+                    className="text-brand-600 font-medium hover:underline"
                   >
                     Chiudi e vai ad aggiungere esercizi
                   </button>
@@ -706,7 +573,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                             required={!isCardioSelected}
                             value={exerciseFormData.sets}
                             onChange={(e) => setExerciseFormData({ ...exerciseFormData, sets: parseInt(e.target.value) || 0 })}
-                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                           />
                         </div>
                         <div>
@@ -717,7 +584,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                             required={!isCardioSelected}
                             value={exerciseFormData.reps}
                             onChange={(e) => setExerciseFormData({ ...exerciseFormData, reps: parseInt(e.target.value) || 0 })}
-                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                             placeholder="es. 10"
                           />
                         </div>
@@ -733,7 +600,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                             required={!isCardioSelected}
                             value={exerciseFormData.restSeconds}
                             onChange={(e) => setExerciseFormData({ ...exerciseFormData, restSeconds: e.target.value === '' ? '' : parseInt(e.target.value) || 0 })}
-                            className="w-full px-4 py-2 pr-16 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full px-4 py-2 pr-16 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                             placeholder="es. 90"
                           />
                           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm font-medium">sec</span>
@@ -751,7 +618,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                       required={isCardioSelected} // Rendiamo obbligatorio per il cardio se vogliamo
                       value={exerciseFormData.notes}
                       onChange={(e) => setExerciseFormData({ ...exerciseFormData, notes: e.target.value })}
-                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                       placeholder={isCardioSelected ? "es. 30 minuti, velocità 6, pendenza 2" : "es. Lento in eccentrica"}
                     />
                   </div>
@@ -766,7 +633,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors"
+                      className="px-4 py-2 bg-brand-950 text-white font-medium hover:bg-brand-800 rounded-lg transition-colors"
                     >
                       Aggiungi
                     </button>
@@ -790,39 +657,39 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Titolo</label>
                 <input type="text" required value={nutritionForm.title} onChange={(e) => setNutritionForm({ ...nutritionForm, title: e.target.value })}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="es. Piano Definizione" />
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="es. Piano Definizione" />
               </div>
               <div className="grid grid-cols-4 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-neutral-700 mb-1">Kcal</label>
                   <input type="number" min="0" value={nutritionForm.dailyCalories}
                     onChange={(e) => { if (e.target.value.includes('-')) return; setNutritionForm({ ...nutritionForm, dailyCalories: e.target.value }); }}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-neutral-700 mb-1">Prot. (g)</label>
                   <input type="number" min="0" value={nutritionForm.dailyProtein}
                     onChange={(e) => { if (e.target.value.includes('-')) return; setNutritionForm({ ...nutritionForm, dailyProtein: e.target.value }); }}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-neutral-700 mb-1">Carb. (g)</label>
                   <input type="number" min="0" value={nutritionForm.dailyCarbs}
                     onChange={(e) => { if (e.target.value.includes('-')) return; setNutritionForm({ ...nutritionForm, dailyCarbs: e.target.value }); }}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-neutral-700 mb-1">Grassi (g)</label>
                   <input type="number" min="0" value={nutritionForm.dailyFat}
                     onChange={(e) => { if (e.target.value.includes('-')) return; setNutritionForm({ ...nutritionForm, dailyFat: e.target.value }); }}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-neutral-700">Pasti</label>
-                  <button type="button" onClick={addMeal} className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                  <button type="button" onClick={addMeal} className="text-sm text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1">
                     <Plus className="w-4 h-4" /> Aggiungi Pasto
                   </button>
                 </div>
@@ -834,14 +701,14 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                       <div key={meal.id} className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
                         <div className="flex items-center gap-2">
                           <input type="text" value={meal.name} onChange={(e) => updateMeal(meal.id, 'name', e.target.value)}
-                            placeholder="es. Colazione" className="flex-1 px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                            placeholder="es. Colazione" className="flex-1 px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
                           <input type="time" value={meal.time || ''} onChange={(e) => updateMeal(meal.id, 'time', e.target.value)}
-                            className="w-28 px-2 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                            className="w-28 px-2 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
                           <button type="button" onClick={() => removeMeal(meal.id)} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"><X className="w-4 h-4" /></button>
                         </div>
                         <textarea value={meal.items} onChange={(e) => updateMeal(meal.id, 'items', e.target.value)} rows={2}
                           placeholder="es. Petto di pollo 150g, riso 80g, verdure"
-                          className="w-full px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                          className="w-full px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
                       </div>
                     ))}
                   </div>
@@ -851,12 +718,12 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Note</label>
                 <textarea value={nutritionForm.notes} onChange={(e) => setNutritionForm({ ...nutritionForm, notes: e.target.value })} rows={2}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Note aggiuntive per il cliente..." />
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Note aggiuntive per il cliente..." />
               </div>
 
               <div className="pt-2 flex gap-3 justify-end">
                 <button type="button" onClick={closeNutritionModal} className="px-4 py-2 text-neutral-600 font-medium hover:bg-neutral-100 rounded-lg transition-colors">Annulla</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors">Salva</button>
+                <button type="submit" className="px-4 py-2 bg-brand-950 text-white font-medium hover:bg-brand-800 rounded-lg transition-colors">Salva</button>
               </div>
             </form>
           </div>

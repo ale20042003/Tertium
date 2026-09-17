@@ -87,7 +87,7 @@ export const ClientProgress: React.FC<ClientProgressProps> = ({ client }) => {
           if (e.target.value.includes('-')) return; // BLOCCO NUMERI NEGATIVI
           setFormData({ ...formData, [name]: e.target.value });
         }}
-        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-2.5 text-white placeholder:text-neutral-600 focus:outline-none focus:border-lime-400 transition-colors"
+        className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors"
         placeholder={placeholder}
       />
     </div>
@@ -97,10 +97,10 @@ export const ClientProgress: React.FC<ClientProgressProps> = ({ client }) => {
     <div className="px-6 space-y-8 animate-in fade-in duration-300">
       
       {/* Form di Inserimento */}
-      <div className="bg-neutral-900 rounded-3xl p-5 border border-neutral-800">
+      <div className="bg-white rounded-3xl p-5 border border-neutral-200 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
-          <Scale className="w-5 h-5 text-lime-400" />
-          <h2 className="text-xl font-bold text-white">Nuova Misurazione</h2>
+          <Scale className="w-5 h-5 text-brand-500" />
+          <h2 className="text-xl font-bold text-neutral-900">Nuova Misurazione</h2>
         </div>
         
         <form onSubmit={handleAddMeasurement} className="space-y-4">
@@ -116,7 +116,7 @@ export const ClientProgress: React.FC<ClientProgressProps> = ({ client }) => {
           
           <button 
             type="submit"
-            className="w-full py-3 bg-lime-400 text-black font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-lime-500 transition-colors"
+            className="w-full py-3 bg-brand-950 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-brand-800 transition-colors"
           >
             <Plus className="w-5 h-5" /> Registra Misure
           </button>
@@ -125,16 +125,16 @@ export const ClientProgress: React.FC<ClientProgressProps> = ({ client }) => {
 
       {/* Grafico */}
       {measurements.length > 0 && (
-        <div className="bg-neutral-900 rounded-3xl p-5 border border-neutral-800">
+        <div className="bg-white rounded-3xl p-5 border border-neutral-200 shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-2">
-              <TrendingDown className="w-5 h-5 text-lime-400" />
-              <h2 className="text-xl font-bold text-white">Andamento</h2>
+              <TrendingDown className="w-5 h-5 text-brand-500" />
+              <h2 className="text-xl font-bold text-neutral-900">Andamento</h2>
             </div>
             <select
               value={activeMetric}
               onChange={(e) => setActiveMetric(e.target.value as keyof BodyMeasurement)}
-              className="bg-neutral-950 border border-neutral-800 text-sm font-bold text-white rounded-lg px-3 py-1.5 focus:outline-none focus:border-lime-400"
+              className="bg-neutral-50 border border-neutral-200 text-sm font-bold text-neutral-900 rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand-500"
             >
               {Object.entries(metricLabels).map(([key, label]) => (
                 <option key={key} value={key}>{label}</option>
@@ -146,21 +146,22 @@ export const ClientProgress: React.FC<ClientProgressProps> = ({ client }) => {
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
-                  <XAxis dataKey="date" stroke="#737373" fontSize={12} tickLine={false} axisLine={false} dy={10} />
-                  <YAxis stroke="#737373" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => val} domain={['auto', 'auto']} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#171717', border: '1px solid #262626', borderRadius: '12px' }}
-                    itemStyle={{ color: '#a3e635' }}
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                  <XAxis dataKey="date" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} dy={10} />
+                  <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => val} domain={['auto', 'auto']} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
+                    itemStyle={{ color: '#1624a2' }}
+                    labelStyle={{ color: '#171717' }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    name={metricLabels[activeMetric as keyof typeof metricLabels]} 
-                    stroke="#a3e635" 
-                    strokeWidth={3} 
-                    dot={{ fill: '#a3e635', strokeWidth: 2, r: 4 }} 
-                    activeDot={{ r: 6, fill: '#fff' }}
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    name={metricLabels[activeMetric as keyof typeof metricLabels]}
+                    stroke="#1624a2"
+                    strokeWidth={3}
+                    dot={{ fill: '#1624a2', strokeWidth: 0, r: 4 }}
+                    activeDot={{ r: 6, fill: '#1624a2', stroke: '#fff', strokeWidth: 2 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -175,36 +176,36 @@ export const ClientProgress: React.FC<ClientProgressProps> = ({ client }) => {
 
       {/* Storico Dati List */}
       {reversedMeasurements.length > 0 && (
-        <div className="bg-neutral-900 rounded-3xl p-5 border border-neutral-800">
+        <div className="bg-white rounded-3xl p-5 border border-neutral-200 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
-            <Target className="w-5 h-5 text-lime-400" />
-            <h2 className="text-xl font-bold text-white">Cronologia</h2>
+            <Target className="w-5 h-5 text-brand-500" />
+            <h2 className="text-xl font-bold text-neutral-900">Cronologia</h2>
           </div>
-          
+
           <div className="space-y-3">
             {reversedMeasurements.map(m => (
-              <div key={m.id} className="bg-neutral-950 p-4 rounded-2xl border border-neutral-800">
+              <div key={m.id} className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="font-bold text-white">{new Date(m.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' })}</span>
-                  <button 
+                  <span className="font-bold text-neutral-900">{new Date(m.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' })}</span>
+                  <button
                     onClick={() => {
                       if (window.confirm("Sei sicuro di voler eliminare questa misurazione?")) {
                         deleteBodyMeasurement(client.id, m.id);
                       }
                     }}
-                    className="text-neutral-500 hover:text-red-400 transition-colors"
+                    className="text-neutral-400 hover:text-red-500 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="grid grid-cols-3 gap-y-2 gap-x-1 text-sm">
-                  {m.weight && <div><span className="text-neutral-500">Peso:</span> <span className="font-bold text-lime-400">{m.weight}kg</span></div>}
-                  {m.height && <div><span className="text-neutral-500">Alt.:</span> <span className="font-bold text-white">{m.height}cm</span></div>}
-                  {m.waist && <div><span className="text-neutral-500">Vita:</span> <span className="font-bold text-white">{m.waist}cm</span></div>}
-                  {m.chest && <div><span className="text-neutral-500">Petto:</span> <span className="font-bold text-white">{m.chest}cm</span></div>}
-                  {m.thigh && <div><span className="text-neutral-500">Coscia:</span> <span className="font-bold text-white">{m.thigh}cm</span></div>}
-                  {m.bicep && <div><span className="text-neutral-500">Bic.:</span> <span className="font-bold text-white">{m.bicep}cm</span></div>}
-                  {m.calf && <div><span className="text-neutral-500">Polp.:</span> <span className="font-bold text-white">{m.calf}cm</span></div>}
+                  {m.weight && <div><span className="text-neutral-500">Peso:</span> <span className="font-bold text-brand-600">{m.weight}kg</span></div>}
+                  {m.height && <div><span className="text-neutral-500">Alt.:</span> <span className="font-bold text-neutral-900">{m.height}cm</span></div>}
+                  {m.waist && <div><span className="text-neutral-500">Vita:</span> <span className="font-bold text-neutral-900">{m.waist}cm</span></div>}
+                  {m.chest && <div><span className="text-neutral-500">Petto:</span> <span className="font-bold text-neutral-900">{m.chest}cm</span></div>}
+                  {m.thigh && <div><span className="text-neutral-500">Coscia:</span> <span className="font-bold text-neutral-900">{m.thigh}cm</span></div>}
+                  {m.bicep && <div><span className="text-neutral-500">Bic.:</span> <span className="font-bold text-neutral-900">{m.bicep}cm</span></div>}
+                  {m.calf && <div><span className="text-neutral-500">Polp.:</span> <span className="font-bold text-neutral-900">{m.calf}cm</span></div>}
                 </div>
               </div>
             ))}

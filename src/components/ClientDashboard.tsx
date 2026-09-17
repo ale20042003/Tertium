@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Clock, ChevronDown, Plus, Dumbbell, CreditCard, Calendar, CheckCircle2, AlertCircle, Clock3, Euro, Edit2, Trash2, Save, CalendarDays, DoorOpen, Users, Apple } from 'lucide-react';
+import { LogOut, Clock, ChevronDown, Plus, Dumbbell, Calendar, Edit2, Trash2, Save, Users, Apple, Megaphone, Pin } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppContext } from '../store';
 import { ExerciseAnimation } from './ExerciseAnimation';
 import { RestTimer } from './RestTimer';
 import { ClientProgress } from './ClientProgress';
 import { WorkoutDay, WorkoutExercise } from '../types';
+import vertiumLogo from '../assets/vertium-logo-full.jpg';
 
 export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void }> = ({ clientId, onLogout }) => {
-  const { clients, exercises, subscriptions, saveCustomPlan } = useAppContext();
+  const { clients, exercises, saveCustomPlan } = useAppContext();
   const client = clients.find(c => c.id === clientId);
 
   const [selectedPlanId, setSelectedPlanId] = useState<string>('current');
   const [activeDayId, setActiveDayId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'workout' | 'progress' | 'subscription' | 'builder' | 'classes' | 'nutrition'>('workout');
+  const [activeTab, setActiveTab] = useState<'workout' | 'progress' | 'builder' | 'classes' | 'nutrition' | 'board'>('workout');
 
   React.useEffect(() => {
     if (!client) return;
@@ -42,54 +43,57 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
   const isReadOnly = selectedPlanId !== 'current';
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white pb-24 font-sans">
-      <header className="px-6 pt-12 pb-6 flex justify-between items-end sticky top-0 bg-neutral-950/80 backdrop-blur-xl z-20 border-b border-neutral-900">
-        <div>
-          <p className="text-lime-400 text-sm font-bold uppercase tracking-widest mb-1">Bentornato</p>
-          <h1 className="text-3xl font-bold tracking-tight">{client.name}</h1>
+    <div className="min-h-screen bg-neutral-50 text-neutral-900 pb-24 font-sans">
+      <header className="px-6 pt-12 pb-6 flex justify-between items-end sticky top-0 bg-white/90 backdrop-blur-xl z-20 border-b border-neutral-200">
+        <div className="flex items-center gap-3">
+          <img src={vertiumLogo} alt="Vertium Fit Club" className="h-12 w-auto rounded-xl shadow-md flex-shrink-0" />
+          <div>
+            <p className="text-brand-950 text-sm font-bold uppercase tracking-widest mb-1">Bentornato</p>
+            <h1 className="text-3xl font-bold tracking-tight text-neutral-900">{client.name}</h1>
+          </div>
         </div>
-        <button onClick={onLogout} className="w-12 h-12 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center hover:bg-neutral-800 transition-colors">
-          <LogOut className="w-5 h-5 text-neutral-400" />
+        <button onClick={onLogout} className="w-12 h-12 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center hover:bg-neutral-200 transition-colors">
+          <LogOut className="w-5 h-5 text-neutral-500" />
         </button>
       </header>
 
       <div className="px-6 pb-2 pt-2">
-        <div className="bg-neutral-900 rounded-full p-1 border border-neutral-800 flex overflow-x-auto no-scrollbar snap-x">
-          <button 
+        <div className="bg-neutral-100 rounded-full p-1 border border-neutral-200 flex overflow-x-auto no-scrollbar snap-x">
+          <button
             onClick={() => setActiveTab('workout')}
-            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'workout' ? 'bg-lime-400 text-black' : 'text-neutral-400 hover:text-white'}`}
+            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'workout' ? 'bg-brand-950 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-900'}`}
           >
             Scheda
           </button>
           <button
             onClick={() => setActiveTab('builder')}
-            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'builder' ? 'bg-lime-400 text-black' : 'text-neutral-400 hover:text-white'}`}
+            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'builder' ? 'bg-brand-950 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-900'}`}
           >
             Crea Scheda
           </button>
           <button
             onClick={() => setActiveTab('progress')}
-            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'progress' ? 'bg-lime-400 text-black' : 'text-neutral-400 hover:text-white'}`}
+            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'progress' ? 'bg-brand-950 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-900'}`}
           >
             Progressi
           </button>
           <button
             onClick={() => setActiveTab('classes')}
-            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'classes' ? 'bg-lime-400 text-black' : 'text-neutral-400 hover:text-white'}`}
+            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'classes' ? 'bg-brand-950 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-900'}`}
           >
             Corsi
           </button>
           <button
             onClick={() => setActiveTab('nutrition')}
-            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'nutrition' ? 'bg-lime-400 text-black' : 'text-neutral-400 hover:text-white'}`}
+            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'nutrition' ? 'bg-brand-950 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-900'}`}
           >
             Nutrizione
           </button>
           <button
-            onClick={() => setActiveTab('subscription')}
-            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'subscription' ? 'bg-lime-400 text-black' : 'text-neutral-400 hover:text-white'}`}
+            onClick={() => setActiveTab('board')}
+            className={`snap-start flex-1 py-2.5 px-4 text-sm font-bold rounded-full transition-colors whitespace-nowrap ${activeTab === 'board' ? 'bg-brand-950 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-900'}`}
           >
-            Abbonamento
+            Bacheca
           </button>
         </div>
       </div>
@@ -100,8 +104,8 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
         <ClassesTab client={client} />
       ) : activeTab === 'nutrition' ? (
         <NutritionTab client={client} />
-      ) : activeTab === 'subscription' ? (
-        <SubscriptionTab client={client} subscriptions={subscriptions} />
+      ) : activeTab === 'board' ? (
+        <AnnouncementsTab />
       ) : activeTab === 'builder' ? (
         <PlanBuilderTab 
           exercises={exercises} 
@@ -116,10 +120,10 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
         <>
           {client.pastPlans && client.pastPlans.length > 0 && (
             <div className="px-6 py-2">
-              <select 
+              <select
                 value={selectedPlanId}
                 onChange={(e) => setSelectedPlanId(e.target.value)}
-                className="w-full bg-neutral-900 border border-neutral-800 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-lime-400 font-bold"
+                className="w-full bg-white border border-neutral-200 shadow-sm text-neutral-900 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-brand-500 font-bold"
               >
                 <option value="current">Scheda Attuale {client.workoutPlan.length === 0 ? '(Vuota)' : ''}</option>
                 {client.pastPlans.map(plan => (
@@ -131,17 +135,17 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
 
           {currentPlanDays.length === 0 ? (
             <div className="p-6 text-center mt-10">
-              <div className="w-20 h-20 bg-neutral-900 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Dumbbell className="w-10 h-10 text-neutral-600" />
+              <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Dumbbell className="w-10 h-10 text-neutral-400" />
               </div>
-              <h2 className="text-xl font-bold mb-2">Nessuna scheda</h2>
+              <h2 className="text-xl font-bold mb-2 text-neutral-900">Nessuna scheda</h2>
               <p className="text-neutral-500 mb-6">
                 {isReadOnly ? 'Questa scheda passata è vuota.' : 'Non hai ancora una scheda di allenamento attiva.'}
               </p>
               {!isReadOnly && (
-                <button 
+                <button
                   onClick={() => setActiveTab('builder')}
-                  className="bg-lime-400 text-black font-bold px-6 py-3 rounded-xl hover:bg-lime-500 transition-colors inline-flex items-center gap-2"
+                  className="bg-brand-950 text-white font-bold px-6 py-3 rounded-xl hover:bg-brand-800 transition-colors inline-flex items-center gap-2"
                 >
                   <Plus className="w-5 h-5" /> Creane una tu
                 </button>
@@ -155,9 +159,9 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
                     key={day.id}
                     onClick={() => setActiveDayId(day.id)}
                     className={`px-6 py-3 rounded-full whitespace-nowrap font-bold text-sm transition-all ${
-                      activeDayId === day.id 
-                        ? 'bg-lime-400 text-black' 
-                        : 'bg-neutral-900 text-neutral-400 border border-neutral-800 hover:border-neutral-700'
+                      activeDayId === day.id
+                        ? 'bg-brand-950 text-white shadow-sm'
+                        : 'bg-white text-neutral-500 border border-neutral-200 hover:border-neutral-300'
                     }`}
                   >
                     {day.name}
@@ -201,14 +205,7 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
 const DAY_LABELS = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
 
 const ClassesTab: React.FC<{ client: any }> = ({ client }) => {
-  const { gymClasses, classBookings, rooms, staff, bookClass, cancelBooking, checkInClient } = useAppContext();
-  const [checkInMessage, setCheckInMessage] = useState('');
-
-  const handleSelfCheckIn = () => {
-    checkInClient(client.id, 'sala_pesi');
-    setCheckInMessage('Check-in registrato! Buon allenamento 💪');
-    setTimeout(() => setCheckInMessage(''), 4000);
-  };
+  const { gymClasses, classBookings, rooms, staff, bookClass, cancelBooking } = useAppContext();
 
   const nextDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
@@ -226,26 +223,10 @@ const ClassesTab: React.FC<{ client: any }> = ({ client }) => {
 
   return (
     <div className="px-6 py-6 space-y-6 animate-in fade-in duration-300">
-      <div className="bg-neutral-900 rounded-3xl p-6 border border-neutral-800">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-lime-400/10 flex items-center justify-center">
-            <DoorOpen className="w-5 h-5 text-lime-400" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">Sala Pesi</h2>
-            <p className="text-neutral-400 text-sm">Registra il tuo ingresso quando arrivi in palestra</p>
-          </div>
-        </div>
-        <button onClick={handleSelfCheckIn} className="w-full py-4 bg-lime-400 text-black font-bold rounded-2xl hover:bg-lime-500 transition-colors">
-          Segna il mio ingresso
-        </button>
-        {checkInMessage && <p className="text-lime-400 text-sm font-medium text-center mt-3">{checkInMessage}</p>}
-      </div>
-
       <div>
-        <h2 className="text-xl font-bold text-white mb-4 px-1">Prossimi 7 giorni</h2>
+        <h2 className="text-xl font-bold text-neutral-900 mb-4 px-1">Prossimi 7 giorni</h2>
         {occurrences.length === 0 ? (
-          <div className="bg-neutral-900 rounded-3xl p-8 border border-neutral-800 text-center text-neutral-500">
+          <div className="bg-white rounded-3xl p-8 border border-neutral-200 shadow-sm text-center text-neutral-500">
             Nessun corso in programma questa settimana.
           </div>
         ) : (
@@ -258,25 +239,25 @@ const ClassesTab: React.FC<{ client: any }> = ({ client }) => {
               const room = rooms.find((r: any) => r.id === gymClass.roomId);
 
               return (
-                <div key={gymClass.id + date} className="bg-neutral-900 rounded-2xl p-4 border border-neutral-800" style={{ borderLeftWidth: '4px', borderLeftColor: gymClass.color }}>
+                <div key={gymClass.id + date} className="bg-white rounded-2xl p-4 border border-neutral-200 shadow-sm" style={{ borderLeftWidth: '4px', borderLeftColor: gymClass.color }}>
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="font-bold text-white">{gymClass.name}</h3>
+                      <h3 className="font-bold text-neutral-900">{gymClass.name}</h3>
                       <p className="text-xs text-neutral-500">{DAY_LABELS[dateObj.getDay()]} · {instructor?.name || 'Nessun istruttore'} · {room?.name || 'Nessuna sala'}</p>
                     </div>
-                    <span className="text-sm font-semibold text-neutral-300 flex items-center gap-1 flex-shrink-0"><Clock className="w-3.5 h-3.5" />{startTime}</span>
+                    <span className="text-sm font-semibold text-neutral-600 flex items-center gap-1 flex-shrink-0"><Clock className="w-3.5 h-3.5" />{startTime}</span>
                   </div>
                   <div className="flex items-center justify-between mt-3">
-                    <span className="text-xs font-medium text-neutral-400 flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {confirmedCount}/{gymClass.capacity}</span>
+                    <span className="text-xs font-medium text-neutral-500 flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {confirmedCount}/{gymClass.capacity}</span>
                     {myBooking ? (
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${myBooking.status === 'waitlist' ? 'bg-amber-400/10 text-amber-400' : 'bg-lime-400/10 text-lime-400'}`}>
+                        <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${myBooking.status === 'waitlist' ? 'bg-amber-50 text-amber-700' : 'bg-brand-50 text-brand-700'}`}>
                           {myBooking.status === 'waitlist' ? 'In lista d\'attesa' : 'Prenotato'}
                         </span>
-                        <button onClick={() => cancelBooking(myBooking.id)} className="text-xs font-bold text-red-400 hover:text-red-300 px-3 py-1.5">Disdici</button>
+                        <button onClick={() => cancelBooking(myBooking.id)} className="text-xs font-bold text-red-500 hover:text-red-600 px-3 py-1.5">Disdici</button>
                       </div>
                     ) : (
-                      <button onClick={() => bookClass(gymClass.id, client.id, date)} className="text-xs font-bold bg-lime-400 text-black px-4 py-1.5 rounded-full hover:bg-lime-500 transition-colors">
+                      <button onClick={() => bookClass(gymClass.id, client.id, date)} className="text-xs font-bold bg-brand-950 text-white px-4 py-1.5 rounded-full hover:bg-brand-800 transition-colors">
                         Prenota
                       </button>
                     )}
@@ -300,10 +281,10 @@ const NutritionTab: React.FC<{ client: any }> = ({ client }) => {
   if (!plan) {
     return (
       <div className="p-6 text-center mt-10 animate-in fade-in duration-300">
-        <div className="w-20 h-20 bg-neutral-900 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Apple className="w-10 h-10 text-neutral-600" />
+        <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Apple className="w-10 h-10 text-neutral-400" />
         </div>
-        <h2 className="text-xl font-bold mb-2 text-white">Nessun Piano Alimentare</h2>
+        <h2 className="text-xl font-bold mb-2 text-neutral-900">Nessun Piano Alimentare</h2>
         <p className="text-neutral-500">Il tuo piano alimentare non è ancora stato impostato dal gestore.</p>
       </div>
     );
@@ -311,37 +292,37 @@ const NutritionTab: React.FC<{ client: any }> = ({ client }) => {
 
   return (
     <div className="px-6 py-6 space-y-6 animate-in fade-in duration-300">
-      <div className="bg-neutral-900 rounded-3xl p-6 border border-neutral-800">
+      <div className="bg-white rounded-3xl p-6 border border-neutral-200 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-lime-400/10 flex items-center justify-center">
-            <Apple className="w-5 h-5 text-lime-400" />
+          <div className="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center">
+            <Apple className="w-5 h-5 text-brand-600" />
           </div>
-          <h2 className="text-xl font-bold text-white">{plan.title}</h2>
+          <h2 className="text-xl font-bold text-neutral-900">{plan.title}</h2>
         </div>
         {(plan.dailyCalories || plan.dailyProtein || plan.dailyCarbs || plan.dailyFat) && (
           <div className="grid grid-cols-4 gap-3">
             {plan.dailyCalories !== undefined && (
-              <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 text-center">
+              <div className="bg-neutral-50 p-3 rounded-2xl border border-neutral-200 text-center">
                 <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-wider">Kcal</p>
-                <p className="text-white font-bold">{plan.dailyCalories}</p>
+                <p className="text-neutral-900 font-bold">{plan.dailyCalories}</p>
               </div>
             )}
             {plan.dailyProtein !== undefined && (
-              <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 text-center">
+              <div className="bg-neutral-50 p-3 rounded-2xl border border-neutral-200 text-center">
                 <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-wider">Prot.</p>
-                <p className="text-white font-bold">{plan.dailyProtein}g</p>
+                <p className="text-neutral-900 font-bold">{plan.dailyProtein}g</p>
               </div>
             )}
             {plan.dailyCarbs !== undefined && (
-              <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 text-center">
+              <div className="bg-neutral-50 p-3 rounded-2xl border border-neutral-200 text-center">
                 <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-wider">Carb.</p>
-                <p className="text-white font-bold">{plan.dailyCarbs}g</p>
+                <p className="text-neutral-900 font-bold">{plan.dailyCarbs}g</p>
               </div>
             )}
             {plan.dailyFat !== undefined && (
-              <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 text-center">
+              <div className="bg-neutral-50 p-3 rounded-2xl border border-neutral-200 text-center">
                 <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-wider">Grassi</p>
-                <p className="text-white font-bold">{plan.dailyFat}g</p>
+                <p className="text-neutral-900 font-bold">{plan.dailyFat}g</p>
               </div>
             )}
           </div>
@@ -351,22 +332,63 @@ const NutritionTab: React.FC<{ client: any }> = ({ client }) => {
       {plan.meals.length > 0 && (
         <div className="space-y-3">
           {plan.meals.map((meal: any) => (
-            <div key={meal.id} className="bg-neutral-900 rounded-2xl p-4 border border-neutral-800">
+            <div key={meal.id} className="bg-white rounded-2xl p-4 border border-neutral-200 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-bold text-white text-sm">{meal.name}</span>
+                <span className="font-bold text-neutral-900 text-sm">{meal.name}</span>
                 {meal.time && <span className="text-xs text-neutral-500">{meal.time}</span>}
               </div>
-              <p className="text-sm text-neutral-400 whitespace-pre-wrap">{meal.items}</p>
+              <p className="text-sm text-neutral-500 whitespace-pre-wrap">{meal.items}</p>
             </div>
           ))}
         </div>
       )}
 
       {plan.notes && (
-        <div className="bg-neutral-900/50 p-4 rounded-2xl border border-neutral-800/50">
-          <p className="text-neutral-400 text-sm italic">"{plan.notes}"</p>
+        <div className="bg-brand-50/60 p-4 rounded-2xl border border-brand-100">
+          <p className="text-neutral-600 text-sm italic">"{plan.notes}"</p>
         </div>
       )}
+    </div>
+  );
+};
+
+// ============================================================================
+// TAB BACHECA (sola lettura)
+// ============================================================================
+const AnnouncementsTab: React.FC = () => {
+  const { announcements } = useAppContext();
+
+  const sorted = [...announcements].sort((a, b) => {
+    if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+    return b.createdAt.localeCompare(a.createdAt);
+  });
+
+  if (sorted.length === 0) {
+    return (
+      <div className="p-6 text-center mt-10 animate-in fade-in duration-300">
+        <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Megaphone className="w-10 h-10 text-neutral-400" />
+        </div>
+        <h2 className="text-xl font-bold mb-2 text-neutral-900">Nessun Avviso</h2>
+        <p className="text-neutral-500">Il gestore non ha ancora pubblicato annunci in bacheca.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-6 py-6 space-y-3 animate-in fade-in duration-300">
+      {sorted.map(a => (
+        <div key={a.id} className={`p-4 rounded-2xl border shadow-sm ${a.pinned ? 'bg-brand-50/60 border-brand-100' : 'bg-white border-neutral-200'}`}>
+          <div className="flex items-start gap-2">
+            {a.pinned && <Pin className="w-4 h-4 text-brand-600 mt-0.5 flex-shrink-0" />}
+            <div className="flex-1">
+              <h3 className="font-bold text-neutral-900">{a.title}</h3>
+              <p className="text-sm text-neutral-600 mt-1 whitespace-pre-wrap">{a.message}</p>
+              <p className="text-xs text-neutral-400 mt-2">{new Date(a.createdAt).toLocaleString('it-IT', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
@@ -417,40 +439,40 @@ const PlanBuilderTab = ({ exercises, onSave }: any) => {
 
   return (
     <div className="px-6 py-6 animate-in fade-in duration-300">
-      <div className="mb-6 bg-lime-400/10 border border-lime-400/20 p-4 rounded-2xl">
-        <h2 className="text-lime-400 font-bold text-lg mb-1">Costruisci il tuo piano</h2>
-        <p className="text-neutral-400 text-sm">Seleziona gli esercizi dal database, imposta le serie, le ripetizioni e salva per attivare la tua nuova scheda personalizzata.</p>
+      <div className="mb-6 bg-brand-50 border border-brand-100 p-4 rounded-2xl">
+        <h2 className="text-brand-700 font-bold text-lg mb-1">Costruisci il tuo piano</h2>
+        <p className="text-neutral-600 text-sm">Seleziona gli esercizi dal database, imposta le serie, le ripetizioni e salva per attivare la tua nuova scheda personalizzata.</p>
       </div>
 
       <div className="space-y-8">
         {days.map((day, dIdx) => (
-          <div key={day.id} className="bg-neutral-900 border border-neutral-800 rounded-3xl p-5">
+          <div key={day.id} className="bg-white border border-neutral-200 shadow-sm rounded-3xl p-5">
             <div className="flex items-center gap-3 mb-6">
-              <input 
-                type="text" 
-                value={day.name} 
+              <input
+                type="text"
+                value={day.name}
                 onChange={(e) => updateDayName(day.id, e.target.value)}
-                className="bg-transparent text-xl font-bold text-white border-b border-neutral-700 focus:border-lime-400 outline-none w-full pb-1"
+                className="bg-transparent text-xl font-bold text-neutral-900 border-b border-neutral-300 focus:border-brand-500 outline-none w-full pb-1"
                 placeholder="Nome sessione (es. Spinta)"
               />
-              <button onClick={() => removeDay(day.id)} className="p-2 text-neutral-500 hover:text-red-400 transition-colors bg-neutral-950 rounded-xl">
+              <button onClick={() => removeDay(day.id)} className="p-2 text-neutral-400 hover:text-red-500 transition-colors bg-neutral-100 rounded-xl">
                 <Trash2 className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-4">
               {day.exercises.map((ex, eIdx) => (
-                <div key={ex.id} className="bg-neutral-950 border border-neutral-800 rounded-2xl p-4 relative">
-                  <span className="absolute top-4 left-4 w-6 h-6 rounded-full bg-neutral-800 flex items-center justify-center text-xs font-bold text-neutral-400">{eIdx + 1}</span>
-                  <button onClick={() => removeExercise(day.id, ex.id)} className="absolute top-4 right-4 text-neutral-500 hover:text-red-400"><XIcon className="w-5 h-5" /></button>
-                  
+                <div key={ex.id} className="bg-neutral-50 border border-neutral-200 rounded-2xl p-4 relative">
+                  <span className="absolute top-4 left-4 w-6 h-6 rounded-full bg-brand-100 flex items-center justify-center text-xs font-bold text-brand-700">{eIdx + 1}</span>
+                  <button onClick={() => removeExercise(day.id, ex.id)} className="absolute top-4 right-4 text-neutral-400 hover:text-red-500"><XIcon className="w-5 h-5" /></button>
+
                   <div className="pl-10 pr-8">
                     <div className="mb-3">
                       <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">Seleziona Esercizio</label>
-                      <select 
+                      <select
                         value={ex.exerciseId}
                         onChange={(e) => updateExercise(day.id, ex.id, 'exerciseId', e.target.value)}
-                        className="w-full bg-neutral-900 border border-neutral-700 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-lime-400"
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-sm rounded-xl px-3 py-2 outline-none focus:border-brand-500"
                       >
                         {exercises.map((e: any) => <option key={e.id} value={e.id}>{e.name} ({e.muscleGroup})</option>)}
                       </select>
@@ -459,15 +481,15 @@ const PlanBuilderTab = ({ exercises, onSave }: any) => {
                     <div className="grid grid-cols-3 gap-3">
                       <div>
                         <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">Serie</label>
-                        <input type="number" min="1" value={ex.sets} onChange={(e) => updateExercise(day.id, ex.id, 'sets', parseInt(e.target.value))} className="w-full bg-neutral-900 border border-neutral-700 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-lime-400 text-center" />
+                        <input type="number" min="1" value={ex.sets} onChange={(e) => updateExercise(day.id, ex.id, 'sets', parseInt(e.target.value))} className="w-full bg-white border border-neutral-300 rounded-xl px-3 py-2 text-neutral-900 text-sm outline-none focus:border-brand-500 text-center" />
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">Reps</label>
-                        <input type="text" value={ex.reps} onChange={(e) => updateExercise(day.id, ex.id, 'reps', e.target.value)} placeholder="es. 10-12" className="w-full bg-neutral-900 border border-neutral-700 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-lime-400 text-center" />
+                        <input type="text" value={ex.reps} onChange={(e) => updateExercise(day.id, ex.id, 'reps', e.target.value)} placeholder="es. 10-12" className="w-full bg-white border border-neutral-300 rounded-xl px-3 py-2 text-neutral-900 text-sm outline-none focus:border-brand-500 text-center" />
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">Recup.</label>
-                        <input type="text" value={ex.rest} onChange={(e) => updateExercise(day.id, ex.id, 'rest', e.target.value)} placeholder="es. 90s" className="w-full bg-neutral-900 border border-neutral-700 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-lime-400 text-center" />
+                        <input type="text" value={ex.rest} onChange={(e) => updateExercise(day.id, ex.id, 'rest', e.target.value)} placeholder="es. 90s" className="w-full bg-white border border-neutral-300 rounded-xl px-3 py-2 text-neutral-900 text-sm outline-none focus:border-brand-500 text-center" />
                       </div>
                     </div>
                   </div>
@@ -475,19 +497,19 @@ const PlanBuilderTab = ({ exercises, onSave }: any) => {
               ))}
             </div>
 
-            <button onClick={() => addExercise(day.id)} className="mt-4 w-full py-3 border border-dashed border-neutral-700 text-neutral-400 hover:text-white hover:border-neutral-500 rounded-xl font-bold flex items-center justify-center gap-2 text-sm transition-colors">
+            <button onClick={() => addExercise(day.id)} className="mt-4 w-full py-3 border border-dashed border-neutral-300 text-neutral-500 hover:text-neutral-900 hover:border-neutral-400 rounded-xl font-bold flex items-center justify-center gap-2 text-sm transition-colors">
               <Plus className="w-4 h-4" /> Aggiungi Esercizio
             </button>
           </div>
         ))}
 
-        <button onClick={addDay} className="w-full py-4 bg-neutral-900 border border-neutral-800 text-white font-bold rounded-3xl flex items-center justify-center gap-2 transition-colors hover:bg-neutral-800">
+        <button onClick={addDay} className="w-full py-4 bg-white border border-dashed border-neutral-300 text-neutral-700 font-bold rounded-3xl flex items-center justify-center gap-2 transition-colors hover:bg-neutral-50">
           <Calendar className="w-5 h-5" /> Aggiungi un Giorno
         </button>
       </div>
 
-      <div className="mt-8 pt-8 border-t border-neutral-900 pb-10">
-        <button onClick={handleSave} className="w-full py-4 bg-lime-400 text-black font-bold rounded-2xl flex items-center justify-center gap-2 text-lg hover:bg-lime-500 transition-colors shadow-lg shadow-lime-400/20">
+      <div className="mt-8 pt-8 border-t border-neutral-200 pb-10">
+        <button onClick={handleSave} className="w-full py-4 bg-brand-950 text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-lg hover:bg-brand-800 transition-colors shadow-lg shadow-brand-500/20">
           <Save className="w-6 h-6" /> Attiva la Scheda
         </button>
       </div>
@@ -498,150 +520,6 @@ const PlanBuilderTab = ({ exercises, onSave }: any) => {
 const XIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
 );
-
-// ============================================================================
-// SUBSCRIPTION TAB
-// ============================================================================
-const SubscriptionTab = ({ client, subscriptions }: any) => {
-  const sub = subscriptions.find((s: any) => s.id === client.subscriptionId);
-  const pay = client.payment;
-
-  if (!sub && !client.subscriptionStart && !pay) {
-    return (
-      <div className="p-6 text-center mt-10 animate-in fade-in duration-300">
-        <div className="w-20 h-20 bg-neutral-900 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CreditCard className="w-10 h-10 text-neutral-600" />
-        </div>
-        <h2 className="text-xl font-bold mb-2 text-white">Nessun Abbonamento</h2>
-        <p className="text-neutral-500">Non hai ancora un abbonamento attivo registrato nel sistema.</p>
-      </div>
-    );
-  }
-
-  const totalCost = pay ? pay.totalCost : (sub ? sub.cost : 0);
-  const amountPaid = pay ? pay.amountPaid : 0;
-  const moneyLeft = Math.max(0, totalCost - amountPaid);
-  const pct = totalCost > 0 ? Math.min(100, (amountPaid / totalCost) * 100) : 0;
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const getStatus = (inst: any) => {
-    if (inst.paid) return { label: 'Saldata', color: 'text-green-400 bg-green-400/10 border border-green-400/20' };
-    if (!inst.dueDate) return { label: 'In attesa', color: 'text-neutral-400 bg-neutral-800 border border-neutral-700' };
-    
-    const due = new Date(inst.dueDate + 'T00:00:00');
-    if (due < today) return { label: 'Scaduta', color: 'text-red-400 bg-red-400/10 border border-red-400/20' };
-    
-    const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
-    
-    if (diff === 0) return { label: 'Scade oggi', color: 'text-amber-400 bg-amber-400/10 border border-amber-400/20' };
-    if (diff <= 7) return { label: `Scade tra ${diff} giorni`, color: 'text-amber-400 bg-amber-400/10 border border-amber-400/20' };
-    return { label: `Scade tra ${diff} giorni`, color: 'text-blue-400 bg-blue-400/10 border border-blue-400/20' };
-  };
-
-  return (
-    <div className="px-6 py-6 space-y-6 animate-in fade-in duration-300">
-      <div className="bg-neutral-900 rounded-3xl p-6 border border-neutral-800">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-full bg-lime-400/10 flex items-center justify-center">
-            <Calendar className="w-5 h-5 text-lime-400" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">Il tuo piano</h2>
-            <p className="text-neutral-400 text-sm">{sub ? sub.name : 'Personalizzato'}</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-neutral-950 p-4 rounded-2xl border border-neutral-800">
-            <p className="text-neutral-500 text-xs font-bold uppercase tracking-wider mb-1">Inizio</p>
-            <p className="text-white font-bold text-sm">
-              {client.subscriptionStart ? new Date(client.subscriptionStart).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'}
-            </p>
-          </div>
-          <div className="bg-neutral-950 p-4 rounded-2xl border border-neutral-800">
-            <p className="text-neutral-500 text-xs font-bold uppercase tracking-wider mb-1">Scadenza</p>
-            <p className="text-white font-bold text-sm">
-              {client.subscriptionEnd ? new Date(client.subscriptionEnd).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-neutral-900 rounded-3xl p-6 border border-neutral-800">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-full bg-lime-400/10 flex items-center justify-center">
-            <Euro className="w-5 h-5 text-lime-400" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">Riepilogo Pagamenti</h2>
-            <p className="text-neutral-400 text-sm">Dettaglio costi e rate</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 flex flex-col justify-center items-center text-center">
-            <span className="text-neutral-500 text-[10px] font-bold uppercase tracking-wider mb-1">Totale</span>
-            <span className="text-white font-bold text-base sm:text-lg">€{totalCost.toFixed(2)}</span>
-          </div>
-          <div className="bg-neutral-950 p-3 rounded-2xl border border-lime-400/30 flex flex-col justify-center items-center text-center shadow-[0_0_15px_rgba(163,230,53,0.1)]">
-            <span className="text-lime-400 text-[10px] font-bold uppercase tracking-wider mb-1">Pagato</span>
-            <span className="text-lime-400 font-bold text-base sm:text-lg">€{amountPaid.toFixed(2)}</span>
-          </div>
-          <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 flex flex-col justify-center items-center text-center">
-            <span className="text-neutral-500 text-[10px] font-bold uppercase tracking-wider mb-1">Da Pagare</span>
-            <span className={`font-bold text-base sm:text-lg ${moneyLeft > 0 ? 'text-red-400' : 'text-neutral-400'}`}>
-              €{moneyLeft.toFixed(2)}
-            </span>
-          </div>
-        </div>
-
-        <div className="mb-8">
-          <div className="h-2 w-full bg-neutral-950 rounded-full overflow-hidden border border-neutral-800">
-            <div 
-              className="h-full rounded-full transition-all duration-1000 ease-out relative"
-              style={{ width: `${pct}%`, background: pct >= 100 ? '#a3e635' : pct >= 50 ? '#60a5fa' : '#fbbf24' }}
-            >
-              <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-sm font-bold text-neutral-500 uppercase tracking-wider mb-3">Rate Programmate</h3>
-          {(!pay || pay.installments.length === 0) ? (
-            <div className="bg-neutral-950 p-4 rounded-2xl border border-neutral-800 text-center">
-              <p className="text-neutral-500 text-sm">Nessuna rata generata dal gestore.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {pay.installments.map((inst: any, idx: number) => {
-                const status = getStatus(inst);
-                return (
-                  <div key={inst.id} className="bg-neutral-950 p-4 rounded-2xl border border-neutral-800 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <span className="text-neutral-600 font-bold text-sm w-4">#{idx + 1}</span>
-                      <div>
-                        <p className="text-white font-bold text-sm sm:text-base">€{inst.amount.toFixed(2)}</p>
-                        <p className="text-xs text-neutral-500">
-                          {inst.dueDate ? new Date(inst.dueDate + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'}
-                        </p>
-                      </div>
-                    </div>
-                    <span className={`text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap ${status.color}`}>
-                      {status.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // ============================================================================
 // EXERCISE CARD
@@ -707,49 +585,51 @@ const ExerciseCard = ({ workoutEx, exerciseInfo, clientId, dayId, isReadOnly }: 
 
   return (
     <>
-      <div className="bg-neutral-900 rounded-3xl overflow-hidden border border-neutral-800 shadow-2xl relative">
-        {exerciseInfo.videoUrl ? (
-          <div className="h-56 bg-neutral-800 relative group">
-            <ExerciseAnimation muscleGroup={exerciseInfo.muscleGroup} videoUrl={exerciseInfo.videoUrl} />
-            <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-transparent to-transparent opacity-80 pointer-events-none" />
+      <div className="bg-white rounded-3xl overflow-hidden border border-neutral-200 shadow-sm relative">
+        <div className="h-56 bg-neutral-100 relative group">
+          <ExerciseAnimation muscleGroup={exerciseInfo.muscleGroup} videoUrl={exerciseInfo.videoUrl} />
+          {exerciseInfo.videoUrl ? (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-80 pointer-events-none" />
+              <div className="absolute top-4 left-5 right-5 flex justify-between items-start pointer-events-none">
+                <span className="bg-black/50 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-white/10">
+                  {exerciseInfo.muscleGroup}
+                </span>
+              </div>
+            </>
+          ) : (
             <div className="absolute top-4 left-5 right-5 flex justify-between items-start pointer-events-none">
-              <span className="bg-neutral-950/80 backdrop-blur-md text-lime-400 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-neutral-800">
+              <span className="bg-brand-50 text-brand-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-brand-100">
                 {exerciseInfo.muscleGroup}
               </span>
             </div>
-          </div>
-        ) : (
-          <div className="px-5 pt-5 pb-0 flex justify-end">
-            <span className="bg-neutral-950 text-lime-400 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-neutral-800">
-              {exerciseInfo.muscleGroup}
-            </span>
-          </div>
-        )}
-        
+          )}
+        </div>
+
         <div className="p-5">
-          <h3 className="text-2xl font-bold text-white mb-2">{exerciseInfo.name}</h3>
-          
+          <h3 className="text-2xl font-bold text-neutral-900 mb-2">{exerciseInfo.name}</h3>
+
           <div className="flex flex-wrap gap-4 mb-6">
-            <div className="bg-neutral-950 px-4 py-3 rounded-2xl border border-neutral-800 flex-1">
+            <div className="bg-neutral-50 px-4 py-3 rounded-2xl border border-neutral-200 flex-1">
               <p className="text-neutral-500 text-xs font-bold uppercase tracking-wider mb-1">Serie x Reps</p>
-              <p className="text-white font-bold text-lg">{workoutEx.sets} <span className="text-neutral-500 mx-1">×</span> {workoutEx.reps}</p>
+              <p className="text-neutral-900 font-bold text-lg">{workoutEx.sets} <span className="text-neutral-400 mx-1">×</span> {workoutEx.reps}</p>
             </div>
             <RestTimer restString={workoutEx.rest} />
           </div>
 
           {workoutEx.notes && (
-            <div className="mb-6 bg-neutral-950/50 p-4 rounded-2xl border border-neutral-800/50">
-              <p className="text-neutral-400 text-sm italic">"{workoutEx.notes}"</p>
+            <div className="mb-6 bg-neutral-50 p-4 rounded-2xl border border-neutral-200">
+              <p className="text-neutral-500 text-sm italic">"{workoutEx.notes}"</p>
             </div>
           )}
-          
+
           {/* Il blocco dei progressi viene mostrato SOLO se l'esercizio NON è Cardio */}
           {!isCardio && (
             <>
-              <button 
-                onClick={() => setExpanded(!expanded)} 
+              <button
+                onClick={() => setExpanded(!expanded)}
                 className={`w-full py-4 rounded-2xl font-bold flex justify-center items-center gap-2 transition-colors ${
-                  expanded ? 'bg-neutral-800 text-white' : (isReadOnly ? 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700' : 'bg-lime-400 text-black hover:bg-lime-500')
+                  expanded ? 'bg-neutral-100 text-neutral-900' : (isReadOnly ? 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200' : 'bg-brand-950 text-white hover:bg-brand-800')
                 }`}
               >
                 {expanded ? 'Chiudi' : (isReadOnly ? 'Visualizza Progressi Passati' : 'Traccia Progressi')} 
@@ -764,37 +644,37 @@ const ExerciseCard = ({ workoutEx, exerciseInfo, clientId, dayId, isReadOnly }: 
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden"
                   >
-                    <div className="pt-6 space-y-4 border-t border-neutral-800 mt-6">
-                      
+                    <div className="pt-6 space-y-4 border-t border-neutral-200 mt-6">
+
                       {sortedLogs.length > 0 && (
                         <div className="space-y-3 mb-6">
                           <h4 className="text-sm font-bold text-neutral-500 uppercase tracking-wider">Storico</h4>
                           {sortedLogs.map((log: any) => (
-                            <div key={log.id} className="flex justify-between items-center bg-neutral-950 p-4 rounded-2xl border border-neutral-800 group">
+                            <div key={log.id} className="flex justify-between items-center bg-neutral-50 p-4 rounded-2xl border border-neutral-200 group">
                               <div>
-                                <div className="font-bold text-neutral-300">Settimana {log.week}</div>
-                                <div className="text-[10px] text-neutral-500 mt-0.5">{new Date(log.date).toLocaleDateString('it-IT')}</div>
+                                <div className="font-bold text-neutral-700">Settimana {log.week}</div>
+                                <div className="text-[10px] text-neutral-400 mt-0.5">{new Date(log.date).toLocaleDateString('it-IT')}</div>
                               </div>
                               <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-1">
-                                  <span className="text-xl font-bold text-lime-400">{log.weight}</span>
+                                  <span className="text-xl font-bold text-brand-600">{log.weight}</span>
                                   <span className="text-neutral-500 font-medium text-sm">kg</span>
                                 </div>
-                                
+
                                 {!isReadOnly && (
                                   <div className="flex items-center gap-1">
-                                    <button 
+                                    <button
                                       onClick={() => {
                                         setEditWeightValue(String(log.weight));
                                         setEditingLog(log);
                                       }}
-                                      className="p-2 text-neutral-500 hover:text-blue-400 transition-colors"
+                                      className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
                                     >
                                       <Edit2 className="w-4 h-4" />
                                     </button>
-                                    <button 
+                                    <button
                                       onClick={() => setDeletingLog(log)}
-                                      className="p-2 text-neutral-500 hover:text-red-400 transition-colors"
+                                      className="p-2 text-neutral-400 hover:text-red-500 transition-colors"
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </button>
@@ -807,13 +687,13 @@ const ExerciseCard = ({ workoutEx, exerciseInfo, clientId, dayId, isReadOnly }: 
                       )}
 
                       {!isReadOnly && (
-                        <form onSubmit={handleSaveLog} className="bg-neutral-950 p-5 rounded-2xl border border-lime-400/30">
+                        <form onSubmit={handleSaveLog} className="bg-brand-50 p-5 rounded-2xl border border-brand-100">
                           <div className="flex items-center justify-between mb-4">
-                            <h4 className="text-sm font-bold text-lime-400 uppercase tracking-wider">Registra Carico</h4>
-                            <select 
+                            <h4 className="text-sm font-bold text-brand-700 uppercase tracking-wider">Registra Carico</h4>
+                            <select
                               value={selectedWeek}
                               onChange={(e) => setSelectedWeek(Number(e.target.value))}
-                              className="bg-neutral-900 border border-neutral-800 text-white text-sm rounded-lg px-2 py-1 focus:outline-none focus:border-lime-400"
+                              className="bg-white border border-neutral-200 text-neutral-900 text-sm rounded-lg px-2 py-1 focus:outline-none focus:border-brand-500"
                             >
                               {availableWeeks.map(w => (
                                 <option key={w} value={w}>Settimana {w}</option>
@@ -833,13 +713,13 @@ const ExerciseCard = ({ workoutEx, exerciseInfo, clientId, dayId, isReadOnly }: 
                                   setNewWeight(e.target.value);
                                 }}
                                 placeholder="Carico"
-                                className="w-full bg-neutral-900 border border-neutral-800 rounded-xl py-3 pl-4 pr-10 text-white placeholder:text-neutral-600 focus:outline-none focus:border-lime-400 transition-colors font-bold text-lg"
+                                className="w-full bg-white border border-neutral-300 rounded-xl py-3 pl-4 pr-10 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-brand-500 transition-colors font-bold text-lg"
                               />
                               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 font-medium">kg</span>
                             </div>
-                            <button 
+                            <button
                               type="submit"
-                              className="bg-lime-400 text-black w-14 rounded-xl flex items-center justify-center hover:bg-lime-500 transition-colors"
+                              className="bg-brand-950 text-white w-14 rounded-xl flex items-center justify-center hover:bg-brand-800 transition-colors"
                             >
                               <Plus className="w-6 h-6" />
                             </button>
@@ -857,22 +737,22 @@ const ExerciseCard = ({ workoutEx, exerciseInfo, clientId, dayId, isReadOnly }: 
       </div>
 
       {deletingLog && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-3xl w-full max-w-sm p-6 shadow-2xl">
-            <h3 className="text-xl font-bold text-white mb-2">Eliminare record?</h3>
-            <p className="text-neutral-400 text-sm mb-6">
-              Stai per eliminare il carico di <span className="font-bold text-white">{deletingLog.weight} kg</span> registrato per la <span className="font-bold text-white">Settimana {deletingLog.week}</span>. L'azione è irreversibile.
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-neutral-900 mb-2">Eliminare record?</h3>
+            <p className="text-neutral-500 text-sm mb-6">
+              Stai per eliminare il carico di <span className="font-bold text-neutral-900">{deletingLog.weight} kg</span> registrato per la <span className="font-bold text-neutral-900">Settimana {deletingLog.week}</span>. L'azione è irreversibile.
             </p>
             <div className="flex gap-3">
-              <button 
+              <button
                 onClick={() => setDeletingLog(null)}
-                className="flex-1 py-3 bg-neutral-800 hover:bg-neutral-700 text-white font-bold rounded-xl transition-colors"
+                className="flex-1 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold rounded-xl transition-colors"
               >
                 Annulla
               </button>
-              <button 
+              <button
                 onClick={confirmDelete}
-                className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors"
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors"
               >
                 Elimina
               </button>
@@ -882,11 +762,11 @@ const ExerciseCard = ({ workoutEx, exerciseInfo, clientId, dayId, isReadOnly }: 
       )}
 
       {editingLog && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-3xl w-full max-w-sm p-6 shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Modifica Settimana {editingLog.week}</h3>
-              <button onClick={() => setEditingLog(null)} className="text-neutral-500 hover:text-white">
+              <h3 className="text-xl font-bold text-neutral-900">Modifica Settimana {editingLog.week}</h3>
+              <button onClick={() => setEditingLog(null)} className="text-neutral-400 hover:text-neutral-900">
                 <XIcon className="w-6 h-6" />
               </button>
             </div>
@@ -902,13 +782,13 @@ const ExerciseCard = ({ workoutEx, exerciseInfo, clientId, dayId, isReadOnly }: 
                     if (e.target.value.includes('-')) return;
                     setEditWeightValue(e.target.value);
                   }}
-                  className="w-full bg-neutral-950 border border-lime-400/50 rounded-xl py-4 pl-4 pr-12 text-white focus:outline-none focus:border-lime-400 transition-colors font-bold text-2xl text-center"
+                  className="w-full bg-neutral-50 border border-neutral-300 rounded-xl py-4 pl-4 pr-12 text-neutral-900 focus:outline-none focus:border-brand-500 transition-colors font-bold text-2xl text-center"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 font-medium">kg</span>
               </div>
-              <button 
+              <button
                 type="submit"
-                className="w-full py-4 bg-lime-400 hover:bg-lime-500 text-black font-bold rounded-xl transition-colors text-lg"
+                className="w-full py-4 bg-brand-950 hover:bg-brand-800 text-white font-bold rounded-xl transition-colors text-lg"
               >
                 Salva Modifica
               </button>

@@ -1,19 +1,12 @@
 const BACKUP_KEYS = [
   'gym_clients',
   'gym_exercises',
-  'gym_subscriptions',
   'gym_staff',
   'gym_rooms',
   'gym_classes',
   'gym_class_bookings',
-  'gym_checkins',
-  'gym_equipment',
-  'gym_expenses',
-  'gym_leads',
   'gym_settings',
   'gym_announcements',
-  'gym_products',
-  'gym_sales',
 ] as const;
 
 export function exportBackup() {

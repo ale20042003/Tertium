@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Dumbbell, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { useAppContext } from '../store';
+import vertiumLogo from '../assets/vertium-logo-full.jpg';
 
-export const ClientAuth: React.FC<{ onLogin: (clientId: string) => void, onManagerLogin: () => void, onStaffLogin: (staffId: string) => void }> = ({ onLogin, onManagerLogin, onStaffLogin }) => {
-  const { clients, registerClient, staff } = useAppContext();
+export const ClientAuth: React.FC<{ onLogin: (clientId: string) => void, onManagerLogin: () => void }> = ({ onLogin, onManagerLogin }) => {
+  const { clients, registerClient } = useAppContext();
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,16 +28,6 @@ export const ClientAuth: React.FC<{ onLogin: (clientId: string) => void, onManag
         return;
       }
 
-      const staffMember = staff.find(s => s.accountEnabled && s.email.toLowerCase() === email.toLowerCase());
-      if (staffMember) {
-        if (staffMember.password !== password) {
-          setError('Credenziali non valide.');
-          return;
-        }
-        onStaffLogin(staffMember.id);
-        return;
-      }
-
       const client = clients.find(c => c.email.toLowerCase() === email.toLowerCase());
       if (!client) {
         setError('Credenziali non valide.');
@@ -55,19 +46,17 @@ export const ClientAuth: React.FC<{ onLogin: (clientId: string) => void, onManag
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-brand-950 text-white flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 z-0">
-        <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1920" className="w-full h-full object-cover opacity-20" alt="Gym" />
-        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/80 to-transparent" />
+        <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1920" className="w-full h-full object-cover opacity-30" alt="Gym" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-950 via-brand-950/85 to-brand-900/50" />
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-800/30 via-transparent to-transparent" />
       </div>
 
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-10">
-          <div className="bg-lime-400 p-4 rounded-full inline-block mb-6">
-            <Dumbbell className="w-8 h-8 text-black" />
-          </div>
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Gym App</h1>
+          <img src={vertiumLogo} alt="Vertium Fit Club" className="h-28 w-auto mx-auto rounded-2xl shadow-2xl mb-6" />
           <p className="text-neutral-400">
             {isRegistering ? 'Crea il tuo account per vedere la scheda' : 'Accedi per vedere i tuoi allenamenti'}
           </p>
@@ -75,7 +64,7 @@ export const ClientAuth: React.FC<{ onLogin: (clientId: string) => void, onManag
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {isRegistering && (
-            <div className="bg-neutral-900/50 border border-lime-400/30 text-lime-400 p-4 rounded-xl text-sm mb-6 text-center">
+            <div className="bg-brand-900/50 border border-brand-400/30 text-brand-300 p-4 rounded-xl text-sm mb-6 text-center">
               Inserisci la mail che hai comunicato in palestra per registrarti.
             </div>
           )}
@@ -89,7 +78,7 @@ export const ClientAuth: React.FC<{ onLogin: (clientId: string) => void, onManag
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email o Username"
-                className="w-full bg-neutral-900 border border-neutral-800 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-neutral-500 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition-all"
+                className="w-full bg-brand-900/50 border border-brand-700/60 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-neutral-400 focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400 transition-all"
               />
             </div>
           </div>
@@ -103,7 +92,7 @@ export const ClientAuth: React.FC<{ onLogin: (clientId: string) => void, onManag
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
-                className="w-full bg-neutral-900 border border-neutral-800 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-neutral-500 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition-all"
+                className="w-full bg-brand-900/50 border border-brand-700/60 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-neutral-400 focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400 transition-all"
               />
             </div>
           </div>
@@ -112,7 +101,7 @@ export const ClientAuth: React.FC<{ onLogin: (clientId: string) => void, onManag
 
           <button
             type="submit"
-            className="w-full bg-lime-400 text-black font-bold text-lg py-4 rounded-2xl hover:bg-lime-500 transition-colors flex items-center justify-center gap-2 mt-8"
+            className="w-full bg-brand-950 text-white font-bold text-lg py-4 rounded-2xl border border-brand-400/40 shadow-lg shadow-brand-500/20 hover:bg-brand-800 hover:border-brand-400/70 transition-colors flex items-center justify-center gap-2 mt-8"
           >
             {isRegistering ? 'Registrati' : 'Accedi'}
             <ArrowRight className="w-5 h-5" />

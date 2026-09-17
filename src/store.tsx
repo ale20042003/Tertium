@@ -1,26 +1,17 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Client, Exercise, WorkoutDay, WorkoutExercise, ExerciseLog, BodyMeasurement, Subscription, ClientPayment, Lead, NutritionPlan } from './types';
+import { Client, Exercise, WorkoutDay, WorkoutExercise, ExerciseLog, BodyMeasurement, NutritionPlan } from './types';
 import { useStaff } from './store/useStaff';
 import { useRooms } from './store/useRooms';
 import { useClasses } from './store/useClasses';
-import { useCheckIns } from './store/useCheckIns';
-import { useEquipment } from './store/useEquipment';
-import { useExpenses } from './store/useExpenses';
-import { useLeads } from './store/useLeads';
 import { useGymSettings } from './store/useGymSettings';
 import { useAnnouncements } from './store/useAnnouncements';
-import { useProducts } from './store/useProducts';
 
 interface AppState extends
   ReturnType<typeof useStaff>,
   ReturnType<typeof useRooms>,
   ReturnType<typeof useClasses>,
-  ReturnType<typeof useCheckIns>,
-  ReturnType<typeof useEquipment>,
-  ReturnType<typeof useExpenses>,
   ReturnType<typeof useGymSettings>,
-  ReturnType<typeof useAnnouncements>,
-  ReturnType<typeof useProducts> {
+  ReturnType<typeof useAnnouncements> {
   clients: Client[];
   exercises: Exercise[];
   addClient: (client: Omit<Client, 'id' | 'workoutPlan'>) => void;
@@ -29,10 +20,6 @@ interface AppState extends
   addExercise: (exercise: Omit<Exercise, 'id'>) => void;
   updateExercise: (exercise: Exercise) => void;
   deleteExercise: (id: string) => void;
-  subscriptions: Subscription[];
-  addSubscription: (sub: Omit<Subscription, 'id'>) => void;
-  updateSubscription: (sub: Subscription) => void;
-  deleteSubscription: (id: string) => void;
   addWorkoutDay: (clientId: string, dayName: string) => void;
   deleteWorkoutDay: (clientId: string, dayId: string) => void;
   addWorkoutExercise: (clientId: string, dayId: string, exercise: Omit<WorkoutExercise, 'id'>) => void;
@@ -43,14 +30,8 @@ interface AppState extends
   archiveWorkoutPlan: (clientId: string, planName: string) => void;
   addBodyMeasurement: (clientId: string, measurement: Omit<BodyMeasurement, 'id' | 'date'>) => void;
   deleteBodyMeasurement: (clientId: string, measurementId: string) => void;
-  updateClientPayment: (clientId: string, payment: ClientPayment) => void;
   saveCustomPlan: (clientId: string, days: WorkoutDay[]) => void;
   updateNutritionPlan: (clientId: string, plan: NutritionPlan) => void;
-  leads: Lead[];
-  addLead: (lead: Omit<Lead, 'id' | 'createdAt'>) => void;
-  updateLead: (lead: Lead) => void;
-  deleteLead: (id: string) => void;
-  convertLeadToClient: (leadId: string) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -72,21 +53,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ];
   });
 
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>(() => {
-    const saved = localStorage.getItem('gym_subscriptions');
-    return saved ? JSON.parse(saved) : [];
-  });
-
   const staffStore = useStaff();
   const roomsStore = useRooms();
   const classesStore = useClasses();
-  const checkInsStore = useCheckIns();
-  const equipmentStore = useEquipment();
-  const expensesStore = useExpenses();
-  const leadsStore = useLeads();
   const gymSettingsStore = useGymSettings();
   const announcementsStore = useAnnouncements();
-  const productsStore = useProducts();
 
   useEffect(() => {
     localStorage.setItem('gym_clients', JSON.stringify(clients));
@@ -95,10 +66,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem('gym_exercises', JSON.stringify(exercises));
   }, [exercises]);
-
-  useEffect(() => {
-    localStorage.setItem('gym_subscriptions', JSON.stringify(subscriptions));
-  }, [subscriptions]);
 
   const addClient = (clientData: Omit<Client, 'id' | 'workoutPlan' | 'pastPlans' | 'measurements'>) => {
     const newClient: Client = {
@@ -142,22 +109,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         });
       });
     }
-  };
-
-  const addSubscription = (subData: Omit<Subscription, 'id'>) => {
-    const newSub: Subscription = {
-      ...subData,
-      id: crypto.randomUUID(),
-    };
-    setSubscriptions([...subscriptions, newSub]);
-  };
-
-  const updateSubscription = (updatedSub: Subscription) => {
-    setSubscriptions(subscriptions.map(s => s.id === updatedSub.id ? updatedSub : s));
-  };
-
-  const deleteSubscription = (id: string) => {
-    setSubscriptions(subscriptions.filter(s => s.id !== id));
   };
 
   const addWorkoutDay = (clientId: string, dayName: string) => {
@@ -357,15 +308,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
-  const updateClientPayment = (clientId: string, payment: ClientPayment) => {
-    setClients(clients.map(c => {
-      if (c.id === clientId) {
-        return { ...c, payment };
-      }
-      return c;
-    }));
-  };
-
   const saveCustomPlan = (clientId: string, days: WorkoutDay[]) => {
     setClients(clients.map(c => {
       if (c.id === clientId) {
@@ -405,35 +347,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
-  const convertLeadToClient = (leadId: string) => {
-    const lead = leadsStore.leads.find(l => l.id === leadId);
-    if (!lead) return;
-    addClient({ name: lead.name, email: lead.email || `${lead.name.toLowerCase().replace(/\s+/g, '.')}@senza-email.local`, phone: lead.phone });
-    leadsStore.updateLead({ ...lead, status: 'convertito' });
-  };
-
   return (
     <AppContext.Provider value={{
-      clients, exercises, subscriptions,
+      clients, exercises,
       addClient, updateClient, deleteClient,
       addExercise, updateExercise, deleteExercise,
-      addSubscription, updateSubscription, deleteSubscription,
       addWorkoutDay, deleteWorkoutDay,
       addWorkoutExercise, deleteWorkoutExercise,
       registerClient, addExerciseLog, deleteExerciseLog, archiveWorkoutPlan,
-      addBodyMeasurement, deleteBodyMeasurement, updateClientPayment,
+      addBodyMeasurement, deleteBodyMeasurement,
       saveCustomPlan, updateNutritionPlan,
       ...staffStore,
       ...roomsStore,
       ...classesStore,
-      ...checkInsStore,
-      ...equipmentStore,
-      ...expensesStore,
-      ...leadsStore,
       ...gymSettingsStore,
       ...announcementsStore,
-      ...productsStore,
-      convertLeadToClient,
     }}>
       {children}
     </AppContext.Provider>

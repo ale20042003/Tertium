@@ -92,17 +92,17 @@ export const Classes: React.FC = () => {
           <p className="text-neutral-500">Catalogo corsi e calendario prenotazioni</p>
         </div>
         {tab === 'catalogo' && (
-          <button onClick={() => openModal()} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+          <button onClick={() => openModal()} className="bg-brand-950 text-white px-4 py-2 rounded-lg font-medium hover:bg-brand-800 transition-colors flex items-center gap-2">
             <Plus className="w-5 h-5" /> Nuovo Corso
           </button>
         )}
       </div>
 
       <div className="flex gap-2 border-b border-neutral-200">
-        <button onClick={() => setTab('catalogo')} className={`px-4 py-2.5 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${tab === 'catalogo' ? 'border-blue-600 text-blue-600' : 'border-transparent text-neutral-500 hover:text-neutral-700'}`}>
+        <button onClick={() => setTab('catalogo')} className={`px-4 py-2.5 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${tab === 'catalogo' ? 'border-brand-600 text-brand-600' : 'border-transparent text-neutral-500 hover:text-neutral-700'}`}>
           <ListTree className="w-4 h-4" /> Catalogo
         </button>
-        <button onClick={() => setTab('calendario')} className={`px-4 py-2.5 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${tab === 'calendario' ? 'border-blue-600 text-blue-600' : 'border-transparent text-neutral-500 hover:text-neutral-700'}`}>
+        <button onClick={() => setTab('calendario')} className={`px-4 py-2.5 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${tab === 'calendario' ? 'border-brand-600 text-brand-600' : 'border-transparent text-neutral-500 hover:text-neutral-700'}`}>
           <CalendarDays className="w-4 h-4" /> Calendario
         </button>
       </div>
@@ -143,7 +143,7 @@ export const Classes: React.FC = () => {
                       <td className="p-4 text-neutral-600">{c.capacity}</td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => openModal(c)} className="p-2 text-neutral-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"><Edit2 className="w-4 h-4" /></button>
+                          <button onClick={() => openModal(c)} className="p-2 text-neutral-400 hover:text-brand-600 transition-colors rounded-lg hover:bg-brand-50"><Edit2 className="w-4 h-4" /></button>
                           <button onClick={() => { if (window.confirm('Eliminare questo corso e tutte le prenotazioni associate?')) deleteGymClass(c.id); }} className="p-2 text-neutral-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
@@ -163,7 +163,7 @@ export const Classes: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-4 flex flex-col sm:flex-row gap-3 justify-between items-center">
             <h2 className="text-lg font-bold text-neutral-900">{DAYS_FULL[dayOfWeek]} {new Date(selectedDate + 'T00:00:00').toLocaleDateString('it-IT')}</h2>
             <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+              className="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
           </div>
 
           {occurrences.length === 0 ? (
@@ -187,7 +187,7 @@ export const Classes: React.FC = () => {
                     </div>
                     <p className="text-sm text-neutral-500">{instructor?.name || 'Nessun istruttore'} · {room?.name || 'Nessuna sala'}</p>
                     <div className="mt-3 flex items-center justify-between">
-                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${isFull ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
+                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${isFull ? 'bg-red-50 text-red-700' : 'bg-brand-50 text-brand-700'}`}>
                         <Users className="w-3.5 h-3.5" /> {confirmed}/{gymClass.capacity}
                       </span>
                       {waitlist > 0 && <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700">{waitlist} in attesa</span>}
@@ -212,13 +212,13 @@ export const Classes: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Nome Corso</label>
                 <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="es. Spinning" />
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="es. Spinning" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Istruttore</label>
                   <select value={formData.staffId} onChange={(e) => setFormData({ ...formData, staffId: e.target.value })}
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none bg-white">
                     <option value="">Nessuno</option>
                     {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
@@ -226,7 +226,7 @@ export const Classes: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Sala</label>
                   <select value={formData.roomId} onChange={(e) => setFormData({ ...formData, roomId: e.target.value })}
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none bg-white">
                     <option value="">Nessuna</option>
                     {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                   </select>
@@ -237,13 +237,13 @@ export const Classes: React.FC = () => {
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Capienza</label>
                   <input type="number" min="1" required value={formData.capacity}
                     onChange={(e) => { if (e.target.value.includes('-')) return; setFormData({ ...formData, capacity: e.target.value }); }}
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Durata (min)</label>
                   <input type="number" min="1" required value={formData.durationMinutes}
                     onChange={(e) => { if (e.target.value.includes('-')) return; setFormData({ ...formData, durationMinutes: e.target.value }); }}
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Colore</label>
@@ -259,13 +259,13 @@ export const Classes: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Descrizione</label>
                 <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Breve descrizione del corso..." />
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Breve descrizione del corso..." />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-neutral-700">Orari Settimanali</label>
-                  <button type="button" onClick={addSlot} className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                  <button type="button" onClick={addSlot} className="text-sm text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1">
                     <Plus className="w-4 h-4" /> Aggiungi Slot
                   </button>
                 </div>
@@ -276,11 +276,11 @@ export const Classes: React.FC = () => {
                     {formData.schedule.map((slot, idx) => (
                       <div key={idx} className="flex items-center gap-2 p-2.5 bg-neutral-50 rounded-xl border border-neutral-200">
                         <select value={slot.dayOfWeek} onChange={(e) => updateSlot(idx, 'dayOfWeek', parseInt(e.target.value))}
-                          className="flex-1 px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                          className="flex-1 px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none bg-white">
                           {DAYS_FULL.map((d, i) => <option key={i} value={i}>{d}</option>)}
                         </select>
                         <input type="time" value={slot.startTime} onChange={(e) => updateSlot(idx, 'startTime', e.target.value)}
-                          className="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                          className="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
                         <button type="button" onClick={() => removeSlot(idx)} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"><X className="w-4 h-4" /></button>
                       </div>
                     ))}
@@ -290,7 +290,7 @@ export const Classes: React.FC = () => {
 
               <div className="pt-4 flex gap-3 justify-end">
                 <button type="button" onClick={closeModal} className="px-4 py-2 text-neutral-600 font-medium hover:bg-neutral-100 rounded-lg transition-colors">Annulla</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors">Salva</button>
+                <button type="submit" className="px-4 py-2 bg-brand-950 text-white font-medium hover:bg-brand-800 rounded-lg transition-colors">Salva</button>
               </div>
             </form>
           </div>
@@ -311,11 +311,11 @@ export const Classes: React.FC = () => {
             <div className="p-6 space-y-5 overflow-y-auto">
               <div className="flex items-center gap-2">
                 <select value={addClientId} onChange={(e) => setAddClientId(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                  className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none bg-white">
                   <option value="">Seleziona cliente da aggiungere...</option>
                   {availableClients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-                <button onClick={handleAddClient} disabled={!addClientId} className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-40 flex items-center gap-1.5 flex-shrink-0">
+                <button onClick={handleAddClient} disabled={!addClientId} className="px-3 py-2 bg-brand-950 text-white rounded-lg text-sm font-medium hover:bg-brand-800 transition-colors disabled:opacity-40 flex items-center gap-1.5 flex-shrink-0">
                   <UserPlus className="w-4 h-4" /> Aggiungi
                 </button>
               </div>
