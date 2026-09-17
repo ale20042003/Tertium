@@ -1,20 +1,32 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Gym Manager
 
-# Run and deploy your AI Studio app
+App per la gestione di una palestra: clienti, staff, corsi, schede di allenamento e comunicazioni.
 
-This contains everything you need to run your app locally.
+## Stack
 
-View your app in AI Studio: https://ai.studio/apps/371bc3e0-9d42-4504-97ca-a115677185e9
+- React 19 + TypeScript
+- Vite
+- Tailwind CSS
+- Recharts (grafici progressi)
+- localForage (storage locale lato client)
 
-## Run Locally
+## Avvio in locale
 
-**Prerequisites:**  Node.js
+**Prerequisiti:** Node.js
 
+1. Installa le dipendenze:
+   ```
+   npm install
+   ```
+2. Avvia l'app in modalità sviluppo:
+   ```
+   npm run dev
+   ```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Script disponibili
+
+- `npm run dev` — avvia il server di sviluppo
+- `npm run build` — build di produzione in `dist/`
+- `npm run preview` — anteprima locale della build di produzione
+- `npm run lint` — type-check con TypeScript
+- `npm run clean` — rimuove la cartella `dist/`
