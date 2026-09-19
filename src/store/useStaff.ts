@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { StaffMember } from '../types';
 import { useLocalStorageState } from './useLocalStorageState';
 import { supabase } from '../lib/supabase';
@@ -48,6 +48,10 @@ export function useStaff(sincronizza: boolean) {
   const [staff, setStaff] = useLocalStorageState<StaffMember[]>('gym_staff', []);
   const attivo = Boolean(supabase) && sincronizza;
 
+  // Serve dentro ricarica senza rientrare nelle sue dipendenze.
+  const staffRef = useRef(staff);
+  staffRef.current = staff;
+
   const ricarica = useCallback(async () => {
     if (!supabase || !attivo) return;
     const { data, error } = await supabase
@@ -58,7 +62,22 @@ export function useStaff(sincronizza: boolean) {
       console.error('Lettura personale fallita:', error.message);
       return;
     }
-    if (data) setStaff(data.map(daRiga));
+    if (!data) return;
+
+    // Come per i clienti: chi esiste solo in locale viene caricato, non cancellato.
+    const emailRemote = new Set(data.map(r => r.email.toLowerCase()));
+    const soloLocali = staffRef.current.filter(
+      s => s.email && !emailRemote.has(s.email.toLowerCase()),
+    );
+    if (soloLocali.length > 0) {
+      const { error: erroreCaricamento } = await supabase.from('staff').insert(soloLocali.map(aRiga));
+      if (erroreCaricamento) {
+        console.error('Caricamento personale locale fallito:', erroreCaricamento.message);
+        return;
+      }
+    }
+
+    setStaff([...data.map(daRiga), ...soloLocali].sort((a, b) => a.name.localeCompare(b.name)));
   }, [attivo, setStaff]);
 
   useEffect(() => { void ricarica(); }, [ricarica]);

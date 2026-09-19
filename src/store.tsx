@@ -60,6 +60,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const { profile } = useAuth();
   const sincronizza = Boolean(supabase) && isStaffRole(profile?.role);
 
+  // Serve dentro ricaricaClienti senza rientrare nelle dipendenze del callback.
+  const clientiRef = React.useRef(clients);
+  clientiRef.current = clients;
+
   const ricaricaClienti = React.useCallback(async () => {
     if (!supabase || !sincronizza) return;
     const { data, error } = await supabase
@@ -70,9 +74,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (error) console.error('Lettura clienti fallita:', error.message);
       return;
     }
+
+    // Alla prima sincronizzazione i clienti inseriti prima di Supabase esistono solo in
+    // locale: vanno caricati, altrimenti la lettura appena fatta li cancellerebbe.
+    const emailRemote = new Set(data.map(r => r.email.toLowerCase()));
+    const soloLocali = clientiRef.current.filter(
+      c => c.email && !emailRemote.has(c.email.toLowerCase()),
+    );
+    if (soloLocali.length > 0) {
+      const { error: erroreCaricamento } = await supabase.from('clients').insert(
+        soloLocali.map(c => ({
+          id: c.id,
+          name: c.name,
+          email: c.email,
+          phone: c.phone || null,
+          birth_date: c.birthDate || null,
+        })),
+      );
+      if (erroreCaricamento) {
+        // Meglio tenerseli in locale che perderli: non tocchiamo lo stato.
+        console.error('Caricamento clienti locali fallito:', erroreCaricamento.message);
+        return;
+      }
+    }
+
     setClients(precedenti => {
       const perId = new Map(precedenti.map(c => [c.id, c]));
-      return data.map(riga => {
+      const remoti = data.map(riga => {
         // Scheda, misure e piano alimentare non sono ancora su Supabase:
         // restano sulla copia locale finché non si migra anche quella parte.
         const locale = perId.get(riga.id);
@@ -88,6 +116,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           nutritionPlan: locale?.nutritionPlan,
         };
       });
+      return [...remoti, ...soloLocali].sort((a, b) => a.name.localeCompare(b.name));
     });
   }, [sincronizza]);
 
