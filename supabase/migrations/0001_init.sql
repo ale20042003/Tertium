@@ -330,14 +330,3 @@ create policy bookings_insert_own on class_bookings for insert to authenticated
 create policy bookings_update_own on class_bookings for update to authenticated
   using (client_id = current_client_id())
   with check (client_id = current_client_id());
-
--- ─── Storage: video degli esercizi ──────────────────────────
-insert into storage.buckets (id, name, public)
-values ('exercise-videos', 'exercise-videos', false)
-on conflict (id) do nothing;
-
-create policy videos_read on storage.objects for select to authenticated
-  using (bucket_id = 'exercise-videos');
-create policy videos_write on storage.objects for all to authenticated
-  using (bucket_id = 'exercise-videos' and is_staff())
-  with check (bucket_id = 'exercise-videos' and is_staff());

@@ -56,7 +56,23 @@ Il service worker si aggiorna da solo al deploy successivo (`registerType: 'auto
 
 ## Backend
 
-Oggi i dati stanno in `localStorage` (e i video in IndexedDB): **ogni browser ha la sua copia**.
-Lo schema Postgres che li sostituirà è in [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql):
-tabelle normalizzate, ruoli (`owner`, `trainer`, `staff`, `client`) e row level security
-che impedisce a un cliente di leggere i dati di un altro.
+Progetto Supabase `Tertium` (`dmguwgtkeydedrrvaxfh`, regione `eu-west-1`), con schema
+già applicato — vedi `supabase/migrations/`:
+
+- `0001_init.sql` — tabelle, ruoli (`owner`, `trainer`, `staff`, `client`) e row level security
+- `0002_exercise_videos_bucket.sql` — bucket privato per i video degli esercizi
+- `0003_private_helpers.sql` — sposta le funzioni `SECURITY DEFINER` fuori dallo schema esposto
+
+Le regole di accesso in breve: lo staff lavora su tutto, il titolare è l'unico che tocca
+anagrafica staff, ruoli e impostazioni, il cliente vede solo la propria scheda, le proprie
+misure, il proprio piano alimentare e le proprie prenotazioni.
+
+L'app **non legge ancora** da Supabase: i dati stanno in `localStorage` finché la migrazione
+dello store non è completa. Quando lo sarà, i dati esistenti si portano su con:
+
+```
+SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/import-backup.mjs backup.json --dry-run
+```
+
+Togli `--dry-run` per scrivere davvero. La `service_role` key sta solo nel terminale: mai nel
+frontend, mai nel repository.
