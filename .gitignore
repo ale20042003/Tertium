@@ -12,3 +12,9 @@ npm-debug.log*
 .DS_Store
 .vscode/
 .idea/
+# Variabili di ambiente locali
+.env
+.env.local
+
+# Netlify
+.netlify/

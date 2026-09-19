@@ -3,6 +3,11 @@ import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { useAppContext } from '../store';
 import vertiumLogo from '../assets/vertium-logo-full.jpg';
 
+// Credenziali gestore temporanee: stopgap finché non c'è l'auth reale su Supabase.
+// Attenzione: essendo lette a build time finiscono nel bundle, non sono un segreto.
+const MANAGER_USER = import.meta.env.VITE_MANAGER_USER || 'admin';
+const MANAGER_PASSWORD = import.meta.env.VITE_MANAGER_PASSWORD || 'admin';
+
 export const ClientAuth: React.FC<{ onLogin: (clientId: string) => void, onManagerLogin: () => void }> = ({ onLogin, onManagerLogin }) => {
   const { clients, registerClient } = useAppContext();
   const [isRegistering, setIsRegistering] = useState(false);
@@ -23,7 +28,7 @@ export const ClientAuth: React.FC<{ onLogin: (clientId: string) => void, onManag
       }
     } else {
       // Login logic
-      if (email === 'admin' && password === 'admin') {
+      if (email === MANAGER_USER && password === MANAGER_PASSWORD) {
         onManagerLogin();
         return;
       }
