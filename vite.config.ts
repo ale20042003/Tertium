@@ -13,8 +13,8 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.png', 'icons/apple-touch-icon.png'],
         manifest: {
-          name: 'Vertium Fit Club',
-          short_name: 'Vertium',
+          name: 'Tertium Fit Club',
+          short_name: 'Tertium',
           description: 'Gestionale palestra: schede, corsi, clienti e staff.',
           lang: 'it',
           start_url: '/',

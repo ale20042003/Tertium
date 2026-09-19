@@ -6,7 +6,7 @@ import { Staff } from './Staff';
 import { Classes } from './Classes';
 import { Settings } from './Settings';
 import { Announcements } from './Announcements';
-import vertiumLogo from '../assets/vertium-logo-full.jpg';
+import tertiumLogo from '../assets/tertium-logo-full.jpg';
 
 export type DashboardViewer = { type: 'manager' };
 
@@ -52,7 +52,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
       {/* Mobile Header */}
       <div className="md:hidden bg-white border-b border-neutral-200 p-3 flex justify-between items-center z-20 flex-shrink-0">
-        <img src={vertiumLogo} alt="Vertium Fit Club" className="h-10 w-auto rounded-xl shadow-sm block" />
+        <img src={tertiumLogo} alt="Tertium Fit Club" className="h-10 w-auto rounded-xl shadow-sm block" />
         <div className="flex items-center gap-2">
           {/* Nuovo tasto Logout rapido per mobile */}
           <button onClick={onLogout} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
@@ -71,7 +71,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         ${isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
       `}>
         <div className="p-6 hidden md:flex items-center justify-center bg-white border-b border-neutral-100 flex-shrink-0">
-          <img src={vertiumLogo} alt="Vertium Fit Club" className="h-16 w-auto rounded-2xl shadow-md block" />
+          <img src={tertiumLogo} alt="Tertium Fit Club" className="h-16 w-auto rounded-2xl shadow-md block" />
         </div>
 
         <nav className="flex-1 p-4 space-y-5 mt-4 md:mt-0 overflow-y-auto">

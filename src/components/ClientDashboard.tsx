@@ -6,7 +6,7 @@ import { ExerciseAnimation } from './ExerciseAnimation';
 import { RestTimer } from './RestTimer';
 import { ClientProgress } from './ClientProgress';
 import { WorkoutDay, WorkoutExercise } from '../types';
-import vertiumLogo from '../assets/vertium-logo-full.jpg';
+import tertiumLogo from '../assets/tertium-logo-full.jpg';
 
 export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void }> = ({ clientId, onLogout }) => {
   const { clients, exercises, saveCustomPlan } = useAppContext();
@@ -38,7 +38,7 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
   if (!client) {
     return (
       <div className="min-h-screen bg-brand-950 text-white flex flex-col items-center justify-center gap-6 p-8 text-center">
-        <img src={vertiumLogo} alt="Vertium Fit Club" className="h-20 w-auto rounded-2xl shadow-2xl" />
+        <img src={tertiumLogo} alt="Tertium Fit Club" className="h-20 w-auto rounded-2xl shadow-2xl" />
         <p className="text-neutral-300">Stiamo caricando i tuoi dati…</p>
         <button
           onClick={onLogout}
@@ -61,7 +61,7 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
     <div className="min-h-screen bg-neutral-50 text-neutral-900 pb-24 font-sans">
       <header className="px-6 pt-12 pb-6 flex justify-between items-end sticky top-0 bg-white/90 backdrop-blur-xl z-20 border-b border-neutral-200">
         <div className="flex items-center gap-3">
-          <img src={vertiumLogo} alt="Vertium Fit Club" className="h-12 w-auto rounded-xl shadow-md flex-shrink-0" />
+          <img src={tertiumLogo} alt="Tertium Fit Club" className="h-12 w-auto rounded-xl shadow-md flex-shrink-0" />
           <div>
             <p className="text-brand-950 text-sm font-bold uppercase tracking-widest mb-1">Bentornato</p>
             <h1 className="text-3xl font-bold tracking-tight text-neutral-900">{client.name}</h1>

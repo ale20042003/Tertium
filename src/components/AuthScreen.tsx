@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
-import vertiumLogo from '../assets/vertium-logo-full.jpg';
+import tertiumLogo from '../assets/tertium-logo-full.jpg';
 
 type Mode = 'login' | 'register' | 'forgot';
 
@@ -22,8 +22,8 @@ const Sfondo: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <div className="relative z-10 w-full max-w-md">
       <div className="text-center mb-10">
         <img
-          src={vertiumLogo}
-          alt="Vertium Fit Club"
+          src={tertiumLogo}
+          alt="Tertium Fit Club"
           className="h-28 w-auto mx-auto rounded-2xl shadow-2xl mb-6"
         />
       </div>

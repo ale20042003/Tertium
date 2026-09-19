@@ -1,4 +1,4 @@
-# Vertium Fit Club
+# Tertium Fit Club
 
 Web app per la gestione di una palestra: clienti, staff, corsi, schede di allenamento e comunicazioni.
 Due tipi di accesso: **gestore** (titolare, personal trainer, segreteria) e **cliente**.
