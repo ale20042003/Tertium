@@ -36,9 +36,30 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
-/** I messaggi di Supabase sono in inglese: quelli che l'utente può incontrare li traduciamo. */
-function traduciErrore(message: string): string {
-  const m = message.toLowerCase();
+/**
+ * I messaggi di Supabase sono in inglese. Traduciamo prima sul codice d'errore, che è
+ * stabile, e solo in mancanza di quello sul testo, che invece può cambiare.
+ */
+function traduciErrore(error: { code?: string; message: string }): string {
+  switch (error.code) {
+    case 'invalid_credentials':
+      return 'Email o password non corretti.';
+    case 'email_not_confirmed':
+      return 'Devi prima confermare la registrazione dal link che ti è arrivato via email.';
+    case 'user_already_exists':
+      return 'Questa email è già registrata. Accedi, oppure usa "Password dimenticata".';
+    case 'same_password':
+      return 'La nuova password deve essere diversa da quella che usi adesso.';
+    case 'weak_password':
+      return 'Password troppo debole: usane una di almeno 6 caratteri, meglio se con numeri.';
+    case 'email_address_invalid':
+      return 'Questo indirizzo email non è accettato: i domini di esempio come example.com non sono ammessi.';
+    case 'over_email_send_rate_limit':
+    case 'over_request_rate_limit':
+      return 'Troppi tentativi ravvicinati. Riprova tra qualche minuto.';
+  }
+
+  const m = error.message.toLowerCase();
   if (m.includes('invalid login credentials')) return 'Email o password non corretti.';
   if (m.includes('email not confirmed')) {
     return 'Devi prima confermare la registrazione dal link che ti è arrivato via email.';
@@ -46,17 +67,18 @@ function traduciErrore(message: string): string {
   if (m.includes('user already registered')) {
     return 'Questa email è già registrata. Accedi, oppure usa "Password dimenticata".';
   }
+  if (m.includes('should be different from the old password')) {
+    return 'La nuova password deve essere diversa da quella che usi adesso.';
+  }
   if (m.includes('password should be at least')) {
     return 'La password deve essere di almeno 6 caratteri.';
   }
-  if (m.includes('email rate limit') || m.includes('rate limit')) {
-    return 'Troppi tentativi ravvicinati. Riprova tra qualche minuto.';
-  }
+  if (m.includes('rate limit')) return 'Troppi tentativi ravvicinati. Riprova tra qualche minuto.';
   if (m.includes('database error saving new user')) {
     // Rete di sicurezza del trigger, quando l'hook di registrazione non è attivo.
     return 'Questa email non risulta nel gestionale della palestra. Chiedi in segreteria di essere aggiunto, poi riprova.';
   }
-  return message;
+  return error.message;
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -154,7 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: email.trim(),
       password,
     });
-    if (error) return { error: traduciErrore(error.message) };
+    if (error) return { error: traduciErrore(error) };
     return {};
   }, []);
 
@@ -168,7 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailRedirectTo: window.location.origin,
       },
     });
-    if (error) return { error: traduciErrore(error.message) };
+    if (error) return { error: traduciErrore(error) };
     // Con la conferma via email attiva, l'utente esiste ma la sessione arriva dopo il click.
     return { needsConfirmation: !data.session };
   }, []);
@@ -184,14 +206,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: window.location.origin,
     });
-    if (error) return { error: traduciErrore(error.message) };
+    if (error) return { error: traduciErrore(error) };
     return {};
   }, []);
 
   const updatePassword = useCallback(async (password: string) => {
     if (!supabase) return { error: 'Supabase non configurato.' };
     const { error } = await supabase.auth.updateUser({ password });
-    if (error) return { error: traduciErrore(error.message) };
+    if (error) return { error: traduciErrore(error) };
     setRecoveryMode(false);
     return {};
   }, []);
