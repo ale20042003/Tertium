@@ -57,7 +57,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Solo il personale vede l'elenco completo: per un cliente le policy restituirebbero
   // la sola riga sua, e sovrascriverebbe la copia locale del gestionale.
-  const { profile } = useAuth();
+  const { profile, clientId: idClienteCollegato } = useAuth();
   const sincronizza = Boolean(supabase) && isStaffRole(profile?.role);
 
   // Serve dentro ricaricaClienti senza rientrare nelle dipendenze del callback.
@@ -121,6 +121,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [sincronizza]);
 
   useEffect(() => { void ricaricaClienti(); }, [ricaricaClienti]);
+
+  // Un cliente non vede l'elenco, ma deve poter leggere la propria riga: senza,
+  // il suo lato dell'app non trova nemmeno il proprio nome e resta vuoto.
+  useEffect(() => {
+    if (!supabase || sincronizza || profile?.role !== 'client' || !idClienteCollegato) return;
+
+    let annullato = false;
+    (async () => {
+      const { data, error } = await supabase!
+        .from('clients')
+        .select('id, name, email, phone, birth_date')
+        .eq('id', idClienteCollegato)
+        .maybeSingle();
+      if (annullato) return;
+      if (error || !data) {
+        if (error) console.error('Lettura della propria anagrafica fallita:', error.message);
+        return;
+      }
+      setClients(precedenti => {
+        const locale = precedenti.find(c => c.id === data.id);
+        const proprio: Client = {
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone ?? undefined,
+          birthDate: data.birth_date ?? undefined,
+          workoutPlan: locale?.workoutPlan ?? [],
+          pastPlans: locale?.pastPlans ?? [],
+          measurements: locale?.measurements ?? [],
+          nutritionPlan: locale?.nutritionPlan,
+        };
+        return [proprio, ...precedenti.filter(c => c.id !== data.id)];
+      });
+    })();
+
+    return () => { annullato = true; };
+  }, [sincronizza, profile?.role, idClienteCollegato]);
 
   const staffStore = useStaff(sincronizza);
   const roomsStore = useRooms();

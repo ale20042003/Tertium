@@ -33,7 +33,22 @@ export const ClientDashboard: React.FC<{ clientId: string, onLogout: () => void 
     }
   }, [selectedPlanId, client?.workoutPlan, client?.pastPlans]);
 
-  if (!client) return null;
+  // Senza questa schermata, un cliente i cui dati non sono ancora arrivati
+  // si ritroverebbe davanti una pagina completamente bianca.
+  if (!client) {
+    return (
+      <div className="min-h-screen bg-brand-950 text-white flex flex-col items-center justify-center gap-6 p-8 text-center">
+        <img src={vertiumLogo} alt="Vertium Fit Club" className="h-20 w-auto rounded-2xl shadow-2xl" />
+        <p className="text-neutral-300">Stiamo caricando i tuoi dati…</p>
+        <button
+          onClick={onLogout}
+          className="text-neutral-400 hover:text-white underline underline-offset-4"
+        >
+          Esci
+        </button>
+      </div>
+    );
+  }
 
   const currentPlanDays = selectedPlanId === 'current' 
     ? client.workoutPlan 
