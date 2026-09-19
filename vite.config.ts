@@ -35,11 +35,27 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,png,jpg,svg,woff2}'],
+          // La pagina non va precaricata: se sta nella cache, dopo un deploy l'utente
+          // continua a vedere la versione vecchia finché non ricarica una seconda volta.
+          globPatterns: ['**/*.{js,css,png,jpg,svg,woff2}'],
           // Il bundle con recharts supera il limite di default di 2 MB.
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-          navigateFallback: '/index.html',
           cleanupOutdatedCaches: true,
+          // Il plugin aggiungerebbe una NavigationRoute legata a index.html precaricato,
+          // che qui non è più nel precache: senza questo il service worker va in errore.
+          navigateFallback: null as unknown as undefined,
+          runtimeCaching: [
+            {
+              // Prima la rete, la cache solo come riserva quando si è offline.
+              urlPattern: ({request}: {request: Request}) => request.mode === 'navigate',
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'pagine',
+                networkTimeoutSeconds: 3,
+                expiration: {maxEntries: 10},
+              },
+            },
+          ],
         },
       }),
     ],
