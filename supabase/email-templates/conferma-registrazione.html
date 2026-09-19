@@ -1,0 +1,65 @@
+<!--
+  Supabase → Authentication → Emails → template "Confirm signup"
+  Oggetto consigliato: Conferma la tua registrazione a Vertium Fit Club
+
+  Stile inline e tabelle: i client di posta ignorano i fogli di stile esterni
+  e buona parte del CSS moderno.
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7;margin:0;padding:24px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+
+        <tr>
+          <td align="center" style="background-color:#05092f;padding:32px 24px;">
+            <div style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:2px;">VERTIUM</div>
+            <div style="color:#a1a8ed;font-size:12px;letter-spacing:4px;margin-top:4px;">FIT CLUB</div>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:32px 32px 8px 32px;">
+            <h1 style="margin:0 0 16px 0;font-size:20px;color:#05092f;">Conferma la tua registrazione</h1>
+            <p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;color:#3f3f46;">
+              Ciao, benvenuto in Vertium Fit Club.
+            </p>
+            <p style="margin:0 0 24px 0;font-size:15px;line-height:1.6;color:#3f3f46;">
+              Conferma il tuo indirizzo email per attivare l'account: da lì potrai vedere la tua
+              scheda di allenamento, registrare i carichi e prenotare i corsi.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center" style="padding:0 32px 24px 32px;">
+            <a href="{{ .ConfirmationURL }}"
+               style="display:inline-block;background-color:#05092f;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 32px;border-radius:12px;">
+              Attiva il mio account
+            </a>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:0 32px 32px 32px;">
+            <p style="margin:0 0 8px 0;font-size:13px;line-height:1.6;color:#71717a;">
+              Se il pulsante non funziona, copia e incolla questo indirizzo nel browser:
+            </p>
+            <p style="margin:0;font-size:12px;line-height:1.5;word-break:break-all;color:#6370e3;">
+              {{ .ConfirmationURL }}
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="background-color:#fafafa;padding:20px 32px;border-top:1px solid #e4e4e7;">
+            <p style="margin:0;font-size:12px;line-height:1.6;color:#71717a;">
+              Se non hai richiesto tu questa registrazione, ignora questa email: senza conferma
+              l'account non viene attivato.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
