@@ -5,6 +5,9 @@ import { useRooms } from './store/useRooms';
 import { useClasses } from './store/useClasses';
 import { useGymSettings } from './store/useGymSettings';
 import { useAnnouncements } from './store/useAnnouncements';
+import { supabase } from './lib/supabase';
+import { useAuth, isStaffRole } from './lib/auth';
+import { descriviErrore } from './lib/errors';
 
 interface AppState extends
   ReturnType<typeof useStaff>,
@@ -14,9 +17,9 @@ interface AppState extends
   ReturnType<typeof useAnnouncements> {
   clients: Client[];
   exercises: Exercise[];
-  addClient: (client: Omit<Client, 'id' | 'workoutPlan'>) => void;
-  updateClient: (client: Client) => void;
-  deleteClient: (id: string) => void;
+  addClient: (client: Omit<Client, 'id' | 'workoutPlan'>) => Promise<void>;
+  updateClient: (client: Client) => Promise<void>;
+  deleteClient: (id: string) => Promise<void>;
   addExercise: (exercise: Omit<Exercise, 'id'>) => void;
   updateExercise: (exercise: Exercise) => void;
   deleteExercise: (id: string) => void;
@@ -24,7 +27,6 @@ interface AppState extends
   deleteWorkoutDay: (clientId: string, dayId: string) => void;
   addWorkoutExercise: (clientId: string, dayId: string, exercise: Omit<WorkoutExercise, 'id'>) => void;
   deleteWorkoutExercise: (clientId: string, dayId: string, exerciseId: string) => void;
-  registerClient: (email: string, password: string) => { success: boolean; error?: string; clientId?: string };
   addExerciseLog: (clientId: string, dayId: string, exerciseId: string, log: Omit<ExerciseLog, 'id'>) => void;
   deleteExerciseLog: (clientId: string, dayId: string, exerciseId: string, logId: string) => void;
   archiveWorkoutPlan: (clientId: string, planName: string) => void;
@@ -53,7 +55,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ];
   });
 
-  const staffStore = useStaff();
+  // Solo il personale vede l'elenco completo: per un cliente le policy restituirebbero
+  // la sola riga sua, e sovrascriverebbe la copia locale del gestionale.
+  const { profile } = useAuth();
+  const sincronizza = Boolean(supabase) && isStaffRole(profile?.role);
+
+  const ricaricaClienti = React.useCallback(async () => {
+    if (!supabase || !sincronizza) return;
+    const { data, error } = await supabase
+      .from('clients')
+      .select('id, name, email, phone, birth_date')
+      .order('name');
+    if (error || !data) {
+      if (error) console.error('Lettura clienti fallita:', error.message);
+      return;
+    }
+    setClients(precedenti => {
+      const perId = new Map(precedenti.map(c => [c.id, c]));
+      return data.map(riga => {
+        // Scheda, misure e piano alimentare non sono ancora su Supabase:
+        // restano sulla copia locale finché non si migra anche quella parte.
+        const locale = perId.get(riga.id);
+        return {
+          id: riga.id,
+          name: riga.name,
+          email: riga.email,
+          phone: riga.phone ?? undefined,
+          birthDate: riga.birth_date ?? undefined,
+          workoutPlan: locale?.workoutPlan ?? [],
+          pastPlans: locale?.pastPlans ?? [],
+          measurements: locale?.measurements ?? [],
+          nutritionPlan: locale?.nutritionPlan,
+        };
+      });
+    });
+  }, [sincronizza]);
+
+  useEffect(() => { void ricaricaClienti(); }, [ricaricaClienti]);
+
+  const staffStore = useStaff(sincronizza);
   const roomsStore = useRooms();
   const classesStore = useClasses();
   const gymSettingsStore = useGymSettings();
@@ -67,7 +107,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('gym_exercises', JSON.stringify(exercises));
   }, [exercises]);
 
-  const addClient = (clientData: Omit<Client, 'id' | 'workoutPlan' | 'pastPlans' | 'measurements'>) => {
+  const addClient = async (clientData: Omit<Client, 'id' | 'workoutPlan' | 'pastPlans' | 'measurements'>) => {
     const newClient: Client = {
       ...clientData,
       id: crypto.randomUUID(),
@@ -75,14 +115,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       pastPlans: [],
       measurements: [],
     };
+    if (supabase && sincronizza) {
+      const { error } = await supabase.from('clients').insert({
+        id: newClient.id,
+        name: newClient.name,
+        email: newClient.email,
+        phone: newClient.phone || null,
+        birth_date: newClient.birthDate || null,
+      });
+      if (error) throw new Error(descriviErrore(error.message));
+    }
     setClients([...clients, newClient]);
   };
 
-  const updateClient = (updatedClient: Client) => {
+  const updateClient = async (updatedClient: Client) => {
+    if (supabase && sincronizza) {
+      const { error } = await supabase.from('clients').update({
+        name: updatedClient.name,
+        email: updatedClient.email,
+        phone: updatedClient.phone || null,
+        birth_date: updatedClient.birthDate || null,
+      }).eq('id', updatedClient.id);
+      if (error) throw new Error(descriviErrore(error.message));
+    }
     setClients(clients.map(c => c.id === updatedClient.id ? updatedClient : c));
   };
 
-  const deleteClient = (id: string) => {
+  const deleteClient = async (id: string) => {
+    if (supabase && sincronizza) {
+      const { error } = await supabase.from('clients').delete().eq('id', id);
+      if (error) {
+        console.error('Eliminazione cliente fallita:', error.message);
+        await ricaricaClienti();
+        return;
+      }
+    }
     setClients(clients.filter(c => c.id !== id));
   };
 
@@ -173,25 +240,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return c;
     }));
-  };
-
-  const registerClient = (email: string, password: string) => {
-    const clientIndex = clients.findIndex(c => c.email.toLowerCase() === email.toLowerCase());
-    if (clientIndex === -1) {
-      return { success: false, error: 'Email non trovata. Assicurati che il gestore ti abbia aggiunto.' };
-    }
-    if (clients[clientIndex].isRegistered) {
-      return { success: false, error: 'Questo account è già registrato. Effettua il login.' };
-    }
-    
-    const updatedClients = [...clients];
-    updatedClients[clientIndex] = {
-      ...updatedClients[clientIndex],
-      password,
-      isRegistered: true
-    };
-    setClients(updatedClients);
-    return { success: true, clientId: updatedClients[clientIndex].id };
   };
 
   const addExerciseLog = (clientId: string, dayId: string, exerciseId: string, log: Omit<ExerciseLog, 'id'>) => {
@@ -354,7 +402,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addExercise, updateExercise, deleteExercise,
       addWorkoutDay, deleteWorkoutDay,
       addWorkoutExercise, deleteWorkoutExercise,
-      registerClient, addExerciseLog, deleteExerciseLog, archiveWorkoutPlan,
+      addExerciseLog, deleteExerciseLog, archiveWorkoutPlan,
       addBodyMeasurement, deleteBodyMeasurement,
       saveCustomPlan, updateNutritionPlan,
       ...staffStore,

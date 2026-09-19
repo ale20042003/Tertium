@@ -15,6 +15,7 @@ export const Staff: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState<StaffMember | null>(null);
   const [formData, setFormData] = useState(emptyForm);
+  const [error, setError] = useState<string | null>(null);
 
   const filtered = staff.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -39,10 +40,12 @@ export const Staff: React.FC = () => {
     setIsModalOpen(false);
     setEditing(null);
     setFormData(emptyForm);
+    setError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     const payload = {
       name: formData.name,
       email: formData.email,
@@ -53,9 +56,14 @@ export const Staff: React.FC = () => {
       hireDate: formData.hireDate || undefined,
       notes: formData.notes || undefined,
     };
-    if (editing) updateStaff({ ...editing, ...payload });
-    else addStaff(payload);
-    closeModal();
+    // Il salvataggio passa dal database: se fallisce, la modale resta aperta con il motivo.
+    try {
+      if (editing) await updateStaff({ ...editing, ...payload });
+      else await addStaff(payload);
+      closeModal();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Salvataggio non riuscito.');
+    }
   };
 
   return (
@@ -185,6 +193,10 @@ export const Staff: React.FC = () => {
                 <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={2}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Note aggiuntive..." />
               </div>
+
+              {error && (
+                <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm font-medium">{error}</div>
+              )}
 
               <div className="pt-4 flex gap-3 justify-end">
                 <button type="button" onClick={closeModal} className="px-4 py-2 text-neutral-600 font-medium hover:bg-neutral-100 rounded-lg transition-colors">Annulla</button>

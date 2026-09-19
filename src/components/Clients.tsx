@@ -34,7 +34,7 @@ export const Clients: React.FC = () => {
   });
 
   /* ─── Client modal ─── */
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -44,9 +44,14 @@ export const Clients: React.FC = () => {
     );
     if (emailExists) { setError('Un cliente con questa email è già presente.'); return; }
 
-    if (editingClient) { updateClient({ ...editingClient, ...formData }); }
-    else { addClient(formData); }
-    closeModal();
+    // Il salvataggio passa dal database: se fallisce, la modale resta aperta con il motivo.
+    try {
+      if (editingClient) { await updateClient({ ...editingClient, ...formData }); }
+      else { await addClient(formData); }
+      closeModal();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Salvataggio non riuscito.');
+    }
   };
 
   const openModal = (client?: Client) => {

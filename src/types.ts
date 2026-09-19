@@ -53,8 +53,6 @@ export interface Client {
   name: string;
   email: string;
   phone?: string;
-  password?: string;
-  isRegistered?: boolean;
   workoutPlan: WorkoutDay[];
   pastPlans?: PastWorkoutPlan[];
   measurements?: BodyMeasurement[];
